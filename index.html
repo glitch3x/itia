@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ITIA // THE LADDER - I Think It's Art</title>
+  <meta name="description" content="A high-intensity, avant-garde ladder game experience featuring Ghost Leg Fate Descent, Infinite Mad Ascent climber, and High-Stakes Risk Ladder. Powered by ITIA.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600;800&family=Outfit:wght@300;400;600;700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Real-time Generative Fractal Background Canvas -->
+  <canvas id="fractal-bg-canvas"></canvas>
+
+  <!-- Sound & Fullscreen Quick Bar -->
+  <div class="top-nav-bar">
+    <div class="brand-crest">
+      <div class="itia-vertical-logo">
+        <span>I</span>
+        <span>T</span>
+        <span>I</span>
+        <span>A</span>
+      </div>
+      <div class="brand-text">
+        <span class="brand-sub">I THINK IT'S ART</span>
+        <span class="brand-tagline">THE LADDER SUITE</span>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-mode="forge" id="tab-forge" role="tab" aria-selected="true">
+        <span class="tab-glyph">✦</span>
+        <span class="tab-title">WORD FORGE</span>
+        <span class="tab-badge">MAKE ITIA</span>
+      </button>
+      <button class="mode-tab" data-mode="destiny" id="tab-destiny" role="tab" aria-selected="false">
+        <span class="tab-glyph">⚡</span>
+        <span class="tab-title">LADDER OF DESTINY</span>
+        <span class="tab-badge">GHOST LEG</span>
+      </button>
+      <button class="mode-tab" data-mode="ascent" id="tab-ascent" role="tab" aria-selected="false">
+        <span class="tab-glyph">▲</span>
+        <span class="tab-title">MAD ASCENT</span>
+        <span class="tab-badge">ARCADE CLIMB</span>
+      </button>
+      <button class="mode-tab" data-mode="risk" id="tab-risk" role="tab" aria-selected="false">
+        <span class="tab-glyph">◈</span>
+        <span class="tab-title">RISK LADDER</span>
+        <span class="tab-badge">MULTIPLIER</span>
+      </button>
+    </div>
+
+    <!-- Quick Utilities -->
+    <div class="nav-actions">
+      <button class="icon-btn" id="audio-toggle-btn" title="Toggle Audio (M)" aria-label="Toggle Audio">
+        <span id="audio-icon">🔊</span>
+        <span class="btn-tooltip">SOUND ON</span>
+      </button>
+      <button class="icon-btn" id="rules-btn" title="Help & Info" aria-label="Game Info">
+        <span>?</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="app-main-viewport">
+    
+    <!-- ============================================== -->
+    <!-- MODE 0: WORD FORGE (MAKE THE WORD ITIA) -->
+    <!-- ============================================== -->
+    <section class="game-view-section active" id="view-forge">
+      <div class="forge-workspace">
+        
+        <!-- Forge HUD Header -->
+        <div class="forge-hud glass-panel">
+          <div class="hud-metric highlight">
+            <span class="metric-label">ITIA FORGED</span>
+            <span class="metric-val" id="forge-words-count">0</span>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">SCORE</span>
+            <span class="metric-val" id="forge-score-count">0</span>
+          </div>
+          <div class="hud-metric highlight">
+            <span class="metric-label">COMBO</span>
+            <span class="metric-val" id="forge-combo-count">x1</span>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">ART UNLOCKED</span>
+            <span class="metric-val" id="forge-art-unlocked-badge">0/6</span>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">NEXT DROP</span>
+            <span class="metric-val" id="forge-timer-count" style="color: var(--accent-cyan);">NEXT: [ I ]</span>
+          </div>
+        </div>
+
+        <!-- Forge Stage & Canvas -->
+        <div class="forge-arena-wrap glass-panel">
+          <div class="forge-canvas-container" id="forge-canvas-container">
+            <canvas id="forge-canvas"></canvas>
+
+            <!-- Synthesis Celebration Banner -->
+            <div class="forge-synthesis-banner glass-panel hidden" id="forge-synthesis-banner">
+              <span class="synthesis-crest">✦ ITIA FORGED ✦</span>
+              <h2 id="forged-art-title">GENESIS SINGULARITY</h2>
+              <span id="forged-art-sub">SYNTHESIZED: Fractal Tendril Synthesis</span>
+            </div>
+
+            <!-- Start / Game Over Screen Overlay -->
+            <div class="forge-screen-overlay" id="forge-start-overlay">
+              <div class="overlay-card glass-panel">
+                <div class="overlay-eyebrow">ITIA // SUIKA PHYSICS DROP</div>
+                <h2 class="overlay-title" id="forge-overlay-title">MAKE THE WORD ITIA</h2>
+                <p class="overlay-desc" id="forge-overlay-desc">
+                  Drop glowing letter spheres into the vessel. Collide identical runes to merge and evolve them up the chain until forging the giant <strong>ITIA Art Singularity</strong>!
+                </p>
+
+                <div class="forge-pedestal-preview">
+                  <span class="preview-slot" style="color: #00f0ff;">I</span>
+                  <span style="color: var(--text-dim); align-self: center;">➔</span>
+                  <span class="preview-slot" style="color: #ff2a5f;">T</span>
+                  <span style="color: var(--text-dim); align-self: center;">➔</span>
+                  <span class="preview-slot" style="color: #f59e0b;">I</span>
+                  <span style="color: var(--text-dim); align-self: center;">➔</span>
+                  <span class="preview-slot" style="color: #10b981;">A</span>
+                  <span style="color: var(--text-dim); align-self: center;">➔</span>
+                  <span class="preview-slot" style="color: #a855f7; font-size: 18px;">ITIA</span>
+                </div>
+
+                <button class="cyber-btn primary-btn large-btn" id="forge-start-btn">
+                  <span class="btn-glow"></span>
+                  <span class="btn-text">IGNITE THE FORGE [CLICK OR SPACE]</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Action Bar -->
+          <div class="forge-bottom-actions">
+            <button class="cyber-btn secondary-btn" id="forge-reset-slots-btn">
+              <span>✕ CLEAR VESSEL</span>
+            </button>
+            <div class="forge-hint-ticker">
+              ✦ Aim with Mouse or ◄/► Keys. Click, Space, or ▼ to Drop Spheres!
+            </div>
+            <button class="cyber-btn tertiary-btn" id="forge-gallery-btn">
+              <span>🖼️ ART GALLERY</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- MODE 1: LADDER OF DESTINY (GHOST LEG / AMIDAKUJI) -->
+    <!-- ============================================== -->
+    <section class="game-view-section" id="view-destiny">
+      <div class="destiny-workspace">
+        
+        <!-- Left Control Sidebar -->
+        <aside class="destiny-controls-sidebar glass-panel">
+          <div class="panel-header">
+            <span class="panel-eyebrow">CONFIG // AMIDAKUJI</span>
+            <h3>FATE GENERATOR</h3>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="control-group">
+            <label class="control-label">QUICK SCENARIOS</label>
+            <div class="preset-pill-grid">
+              <button class="preset-pill active" data-preset="giveaway">🎁 Giveaway</button>
+              <button class="preset-pill" data-preset="royale">💀 Battle Royale</button>
+              <button class="preset-pill" data-preset="crypto">💎 ITIA Whitelist</button>
+              <button class="preset-pill" data-preset="roulette">⚡ Dare / Fate</button>
+            </div>
+          </div>
+
+          <!-- Lines & Density Sliders -->
+          <div class="control-group">
+            <div class="slider-header">
+              <label for="ladder-count-slider" class="control-label">PATHS / PLAYERS</label>
+              <span class="slider-val" id="ladder-count-val">6</span>
+            </div>
+            <input type="range" id="ladder-count-slider" min="2" max="10" value="6" step="1" class="cyber-range">
+          </div>
+
+          <div class="control-group">
+            <div class="slider-header">
+              <label for="rung-density-slider" class="control-label">RUNG CHAOS LEVEL</label>
+              <span class="slider-val" id="rung-density-val">Standard (18)</span>
+            </div>
+            <input type="range" id="rung-density-slider" min="6" max="36" value="18" step="2" class="cyber-range">
+          </div>
+
+          <!-- Modifiers & Fog of War -->
+          <div class="control-group">
+            <label class="control-label">SUSPENSE MODIFIERS</label>
+            <div class="toggle-row">
+              <label class="switch-container">
+                <input type="checkbox" id="fog-of-war-toggle">
+                <span class="switch-slider"></span>
+                <span class="switch-label">Fog of War (Blind Rungs)</span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <label class="switch-container">
+                <input type="checkbox" id="cinematic-zoom-toggle" checked>
+                <span class="switch-slider"></span>
+                <span class="switch-label">Dynamic Tension Camera</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="sidebar-actions">
+            <button class="cyber-btn primary-btn" id="start-destiny-btn">
+              <span class="btn-glow"></span>
+              <span class="btn-text">⚡ LAUNCH DESCENT</span>
+            </button>
+            <button class="cyber-btn secondary-btn" id="simultaneous-race-btn">
+              <span class="btn-text">💥 ALL-OUT CHAOS RUN</span>
+            </button>
+            <div class="btn-sub-row">
+              <button class="cyber-btn tertiary-btn" id="reroll-rungs-btn" title="Randomize Rungs">
+                🎲 RE-ROLL RUNGS
+              </button>
+              <button class="cyber-btn tertiary-btn" id="clear-rungs-btn" title="Clear All Rungs">
+                ✕ CLEAR
+              </button>
+            </div>
+          </div>
+
+          <!-- Hint -->
+          <div class="sidebar-hint">
+            <span class="hint-bullet">✦</span> Tip: Click between vertical lines on the canvas to add or remove custom rungs!
+          </div>
+        </aside>
+
+        <!-- Center Stage: The Ladder Arena -->
+        <div class="destiny-arena-wrap glass-panel">
+          
+          <!-- Top Runner Pins (Interactive Header) -->
+          <div class="destiny-top-header" id="destiny-top-header">
+            <!-- Dynamic Player Cards injected here -->
+          </div>
+
+          <!-- The Canvas Stage -->
+          <div class="destiny-canvas-container" id="destiny-canvas-container">
+            <canvas id="destiny-canvas"></canvas>
+            
+            <!-- In-game Suspense Overlay (For dramatic slow-mo & countdown) -->
+            <div class="canvas-floating-status" id="destiny-floating-status">
+              <span id="destiny-status-text">CLICK A RUNNER OR HIT LAUNCH</span>
+            </div>
+          </div>
+
+          <!-- Bottom Rewards Grid (Interactive Footer) -->
+          <div class="destiny-bottom-footer" id="destiny-bottom-footer">
+            <!-- Dynamic Prize Cards injected here -->
+          </div>
+
+        </div>
+
+        <!-- Right Side: Live Results & Roster Editor -->
+        <aside class="destiny-results-sidebar glass-panel">
+          <div class="panel-header">
+            <span class="panel-eyebrow">ROSTER & REWARDS</span>
+            <h3>EDIT FATES</h3>
+          </div>
+
+          <div class="tabs-subnav">
+            <button class="tab-sub active" data-sub="players">PLAYERS (<span id="player-count-badge">6</span>)</button>
+            <button class="tab-sub" data-sub="prizes">REWARDS</button>
+            <button class="tab-sub" data-sub="history">HISTORY</button>
+          </div>
+
+          <!-- Players Tab -->
+          <div class="sub-tab-content active" id="subtab-players">
+            <div class="quick-batch-btns">
+              <button class="micro-btn" id="randomize-names-btn">🎲 Randomize</button>
+              <button class="micro-btn" id="paste-names-btn">📋 Paste List</button>
+              <button class="micro-btn" id="clear-names-btn">Clear</button>
+            </div>
+            <div class="roster-editor-list" id="players-editor-list">
+              <!-- Dynamically populated player edit rows -->
+            </div>
+          </div>
+
+          <!-- Prizes Tab -->
+          <div class="sub-tab-content" id="subtab-prizes">
+            <div class="quick-batch-btns">
+              <button class="micro-btn" id="preset-prizes-btn">⭐ Standard Presets</button>
+              <button class="micro-btn" id="shuffle-prizes-btn">🔀 Shuffle</button>
+            </div>
+            <div class="roster-editor-list" id="prizes-editor-list">
+              <!-- Dynamically populated prize edit rows -->
+            </div>
+          </div>
+
+          <!-- History Tab -->
+          <div class="sub-tab-content" id="subtab-history">
+            <div class="history-list" id="destiny-history-list">
+              <div class="history-empty">No rounds played yet. Launch a fate descent!</div>
+            </div>
+            <button class="micro-btn full-width" id="export-history-btn">📋 Copy Summary</button>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- MODE 2: MAD ASCENT (ARCADE REFLEX LADDER CLIMBER) -->
+    <!-- ============================================== -->
+    <section class="game-view-section" id="view-ascent">
+      <div class="ascent-workspace">
+        
+        <!-- Ascent HUD Header -->
+        <div class="ascent-hud glass-panel">
+          <div class="hud-metric">
+            <span class="metric-label">ALTITUDE</span>
+            <span class="metric-val" id="ascent-altitude">0<span class="unit">M</span></span>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">SCORE</span>
+            <span class="metric-val" id="ascent-score">0</span>
+          </div>
+          <div class="hud-metric highlight">
+            <span class="metric-label">COMBO</span>
+            <span class="metric-val" id="ascent-combo">x1</span>
+          </div>
+          <div class="hud-metric itia-hud-metric">
+            <span class="metric-label">ITIA MONOLITH</span>
+            <div class="itia-hud-matrix" id="ascent-itia-matrix">
+              <span class="matrix-char" id="matrix-I1" data-char="I">I</span>
+              <span class="matrix-char" id="matrix-T" data-char="T">T</span>
+              <span class="matrix-char" id="matrix-I2" data-char="I">I</span>
+              <span class="matrix-char active" id="matrix-A" data-char="A">A</span>
+            </div>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">BEST CLIMB</span>
+            <span class="metric-val" id="ascent-best">0<span class="unit">M</span></span>
+          </div>
+          <div class="hud-metric energy-metric">
+            <span class="metric-label">HYPER OVERDRIVE</span>
+            <div class="energy-bar-wrap">
+              <div class="energy-bar-fill" id="ascent-energy-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Arcade Play Arena -->
+        <div class="ascent-arena-container glass-panel">
+          <canvas id="ascent-canvas"></canvas>
+
+          <!-- Start / Game Over Screen Overlay -->
+          <div class="ascent-screen-overlay" id="ascent-overlay">
+            <div class="overlay-card glass-panel" id="ascent-start-card">
+              <div class="overlay-eyebrow">ITIA // CYBER-REFLEX</div>
+              <h2 class="overlay-title">THE MAD ASCENT</h2>
+              <p class="overlay-desc">
+                Ascend the infinite shifting fractal ladder into the ITIA void.
+                Quickly step left or right onto solid rungs. Dodge cracked traps, jump over void gaps, and outclimb the rising thermal disintegrator!
+              </p>
+              
+              <div class="controls-guide-grid">
+                <div class="guide-item">
+                  <div class="key-combo"><kbd>A</kbd> / <kbd>◄</kbd></div>
+                  <span>Step Left</span>
+                </div>
+                <div class="guide-item">
+                  <div class="key-combo"><kbd>D</kbd> / <kbd>►</kbd></div>
+                  <span>Step Right</span>
+                </div>
+                <div class="guide-item">
+                  <div class="key-combo"><kbd>SPACE</kbd> / <kbd>▲</kbd></div>
+                  <span>Jump Gap</span>
+                </div>
+              </div>
+
+              <button class="cyber-btn primary-btn large-btn" id="ascent-play-btn">
+                <span class="btn-glow"></span>
+                <span class="btn-text">INITIALIZE ASCENT [SPACE]</span>
+              </button>
+            </div>
+
+            <!-- Game Over Card -->
+            <div class="overlay-card glass-panel hidden" id="ascent-gameover-card">
+              <div class="overlay-eyebrow danger-eyebrow">VOID PLUMMET</div>
+              <h2 class="overlay-title danger-text">ASCENT TERMINATED</h2>
+              
+              <div class="gameover-stats-grid">
+                <div class="stat-box">
+                  <span class="stat-name">FINAL ALTITUDE</span>
+                  <span class="stat-value" id="go-altitude">0M</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-name">TOTAL SCORE</span>
+                  <span class="stat-value" id="go-score">0</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-name">MAX COMBO</span>
+                  <span class="stat-value" id="go-combo">x0</span>
+                </div>
+                <div class="stat-box highlight-box">
+                  <span class="stat-name">ART GRADE</span>
+                  <span class="stat-value" id="go-grade">D</span>
+                </div>
+              </div>
+
+              <div class="gameover-actions">
+                <button class="cyber-btn primary-btn" id="ascent-retry-btn">
+                  <span class="btn-glow"></span>
+                  <span class="btn-text">RE-ENTER THE LADDER</span>
+                </button>
+                <button class="cyber-btn secondary-btn" id="ascent-share-score-btn">
+                  <span class="btn-text">📋 COPY RECORD</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Touch / Mobile On-Screen Controls for Arcade -->
+          <div class="ascent-mobile-controls">
+            <button class="touch-control-btn" id="touch-left-btn" aria-label="Step Left">
+              <span>◄ LEFT</span>
+            </button>
+            <button class="touch-control-btn center-jump" id="touch-jump-btn" aria-label="Jump Gap">
+              <span>▲ JUMP</span>
+            </button>
+            <button class="touch-control-btn" id="touch-right-btn" aria-label="Step Right">
+              <span>RIGHT ►</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- MODE 3: RISK LADDER (HIGH STAKES MULTIPLIER TOWER) -->
+    <!-- ============================================== -->
+    <section class="game-view-section" id="view-risk">
+      <div class="risk-workspace">
+        
+        <div class="risk-tower-card glass-panel">
+          <div class="panel-header text-center">
+            <span class="panel-eyebrow">HIGH-STAKES ASCENSION</span>
+            <h3>THE MULTIPLIER TOWER</h3>
+            <p class="panel-sub">Climb rung by rung. With each step, the reward surges, but the ladder becomes increasingly unstable. Cash out before the void snaps your rung!</p>
+          </div>
+
+          <div class="risk-play-stage">
+            
+            <!-- Far Left: The ITIA Monolith Totem Pillar -->
+            <div class="itia-monolith-totem" id="risk-totem-pillar">
+              <div class="totem-glyph" data-tier="I1" id="totem-I1">
+                <span>I</span>
+                <span class="glyph-label">APEX // 500x</span>
+              </div>
+              <div class="totem-glyph" data-tier="T" id="totem-T">
+                <span>T</span>
+                <span class="glyph-label">TITAN // 60x</span>
+              </div>
+              <div class="totem-glyph" data-tier="I2" id="totem-I2">
+                <span>I</span>
+                <span class="glyph-label">INNER // 6.5x</span>
+              </div>
+              <div class="totem-glyph active" data-tier="A" id="totem-A">
+                <span>A</span>
+                <span class="glyph-label">BASE // 1.1x</span>
+              </div>
+            </div>
+
+            <!-- Left: Multiplier Ladder Rung Visualizer -->
+            <div class="risk-ladder-track" id="risk-ladder-track">
+              <!-- Dynamically populated rungs from 500x down to 1.1x -->
+            </div>
+
+            <!-- Right: Play Status & Interactive Actions -->
+            <div class="risk-control-hub">
+              
+              <div class="risk-status-display glass-panel">
+                <div class="status-metric">
+                  <span class="label">CURRENT RUNG</span>
+                  <span class="val" id="risk-curr-step">GROUND</span>
+                </div>
+                <div class="status-metric highlight">
+                  <span class="label">CURRENT MULTIPLIER</span>
+                  <span class="val pulse" id="risk-curr-mult">1.00x</span>
+                </div>
+                <div class="status-metric">
+                  <span class="label">CURRENT VALUE</span>
+                  <span class="val" id="risk-curr-val">100 ITIA</span>
+                </div>
+                <div class="status-metric danger">
+                  <span class="label">BREAK PROBABILITY</span>
+                  <span class="val" id="risk-fail-chance">0%</span>
+                </div>
+              </div>
+
+              <!-- Stake Selector -->
+              <div class="risk-stake-selector">
+                <label class="control-label">STARTING ENTRY TICKET</label>
+                <div class="stake-chips-row">
+                  <button class="chip-btn active" data-stake="100">100</button>
+                  <button class="chip-btn" data-stake="250">250</button>
+                  <button class="chip-btn" data-stake="500">500</button>
+                  <button class="chip-btn" data-stake="1000">1,000</button>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="risk-action-buttons">
+                <button class="cyber-btn primary-btn large-btn" id="risk-step-btn">
+                  <span class="btn-glow"></span>
+                  <span class="btn-text">🪜 STEP UP NEXT RUNG</span>
+                </button>
+                <button class="cyber-btn cashout-btn large-btn disabled" id="risk-cashout-btn">
+                  <span class="btn-text">💰 SECURE CASH OUT</span>
+                </button>
+              </div>
+
+              <div class="risk-log-feed" id="risk-log-feed">
+                <div class="log-item system">Choose a ticket stake and step onto the ladder.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODALS & OVERLAYS -->
+  <!-- ============================================== -->
+
+  <!-- Victory & Ceremony Modal for Ladder of Destiny -->
+  <div class="cyber-modal-backdrop hidden" id="destiny-winner-modal">
+    <div class="cyber-modal-card glass-panel">
+      <div class="modal-crest">
+        <span class="modal-star">✦</span>
+        <span class="modal-eyebrow">DESTINY REVEALED</span>
+        <span class="modal-star">✦</span>
+      </div>
+      <h2 class="modal-title" id="winner-modal-title">THE FATE CEREMONY</h2>
+      
+      <div class="winner-hero-box" id="winner-hero-box">
+        <!-- Highlights the latest runner's fate -->
+      </div>
+
+      <div class="modal-results-summary" id="modal-all-results-summary">
+        <!-- Full list of all arrivals -->
+      </div>
+
+      <div class="modal-actions-row">
+        <button class="cyber-btn primary-btn" id="modal-close-btn">
+          <span class="btn-text">PROCEED</span>
+        </button>
+        <button class="cyber-btn secondary-btn" id="modal-copy-summary-btn">
+          <span class="btn-text">📋 SHARE RESULTS</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help & Rules Modal -->
+  <div class="cyber-modal-backdrop hidden" id="rules-modal">
+    <div class="cyber-modal-card glass-panel wide-modal">
+      <div class="modal-crest">
+        <span class="modal-eyebrow">ARCHIVE // DOCUMENTATION</span>
+      </div>
+      <h2 class="modal-title">THE ITIA LADDER SUITE</h2>
+      
+      <div class="rules-content-body">
+        <div class="rule-section">
+          <h3>⚡ 1. LADDER OF DESTINY (GHOST LEG / 사다리타기)</h3>
+          <p>
+            The iconic Japanese <em>Amidakuji</em> / Korean <em>Sadari-tagi</em> ladder game. 
+            Vertical paths link each player at the top with a fate at the bottom. 
+            As your marker descends, you <strong>MUST</strong> turn at every horizontal rung encountered.
+            Click between vertical lines to craft custom rungs, or toggle <strong>Fog of War</strong> for heart-racing blind suspense!
+          </p>
+        </div>
+
+        <div class="rule-section">
+          <h3>▲ 2. MAD ASCENT (REFLEX ARCADE CLIMBER)</h3>
+          <p>
+            An endless vertical reflex test. Tap Left/Right to hit the rungs, jump void hazards with Space, and maintain rapid momentum to ignite <strong>Overdrive Mode</strong> with 10x score multipliers. Stay ahead of the ascending void disintegrator!
+          </p>
+        </div>
+
+        <div class="rule-section">
+          <h3>◈ 3. RISK LADDER (TOWER OF MULTIPLIERS)</h3>
+          <p>
+            High stakes rung climb. Each step scales your multiplier toward 500x. Weigh the probability of rung failure against the glory of ascending to Art God status. Cash out before the collapse!
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <button class="cyber-btn primary-btn" id="rules-close-btn">
+          <span class="btn-text">ACKNOWLEDGE & PLAY</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITIA Art Forge Gallery Modal -->
+  <div class="cyber-modal-backdrop hidden" id="forge-gallery-modal">
+    <div class="cyber-modal-card glass-panel wide-modal">
+      <div class="modal-crest">
+        <span class="modal-star">✦</span>
+        <span class="modal-eyebrow">SYNTHESIZED ARCHIVE</span>
+        <span class="modal-star">✦</span>
+      </div>
+      <h2 class="modal-title">THE ITIA COLLECTION</h2>
+      <p class="panel-sub">Each time you assemble the word I · T · I · A in the forge, a fine art creation is synthesized into the permanent collection.</p>
+      
+      <div class="forge-gallery-grid" id="forge-gallery-grid">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="modal-actions-row">
+        <button class="cyber-btn primary-btn" id="forge-gallery-close">
+          <span class="btn-text">RETURN TO FORGE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="src/audio.js"></script>
+  <script src="src/fractalBackground.js"></script>
+  <script src="src/ghostLegGame.js"></script>
+  <script src="src/arcadeClimber.js"></script>
+  <script src="src/riskLadder.js"></script>
+  <script src="src/wordForge.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
