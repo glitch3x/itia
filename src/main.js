@@ -1,290 +1,872 @@
 /**
- * ITIA // THE LADDER SUITE - MAIN APPLICATION CONTROLLER
- * Orchestrates mode switching, global audio state, modals, clipboard sharing, and keybindings.
+ * ITIA STUDIO // MAIN APPLICATION CONTROLLER
+ * Orchestrates UI interactions, artwork gallery templates, trace controls,
+ * color studio, layer panel, symmetry, timelapse replay, and export card.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Mode tabs & views
-  const tabs = document.querySelectorAll('.mode-tab');
-  const views = {
-    forge: document.getElementById('view-forge'),
-    destiny: document.getElementById('view-destiny'),
-    ascent: document.getElementById('view-ascent'),
-    risk: document.getElementById('view-risk')
-  };
+import { studioAudio } from "./audio.js";
+import { ART_TEMPLATES } from "./templates.js";
+import { CanvasEngine } from "./canvasEngine.js";
 
-  function switchMode(mode) {
-    window.soundFx.playClick();
+class StudioApp {
+  constructor() {
+    this.audio = studioAudio;
+    this.engine = null;
+    this.activeTemplate = null;
 
-    // Update active tab
-    tabs.forEach(tab => {
-      const isActive = tab.dataset.mode === mode;
-      tab.classList.toggle('active', isActive);
-      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
+    // UI state
+    this.activeRightTab = "trace"; // trace, color, layers
+    this.isWipeActive = false;
+    this.wipeValue = 0.5;
+    this.isZenMode = false;
+    this.timelapseSpeed = 2;
+    this.isPipVisible = false;
 
-    // Update active view
-    Object.keys(views).forEach(k => {
-      if (views[k]) {
-        views[k].classList.toggle('active', k === mode);
-      }
-    });
-
-    // Trigger canvas resizing on switch
-    setTimeout(() => {
-      if (mode === 'forge' && window.wordForge) {
-        window.wordForge.resize();
-      } else if (mode === 'destiny' && window.ghostLeg) {
-        window.ghostLeg.resizeCanvas();
-        window.ghostLeg.render();
-      } else if (mode === 'ascent' && window.arcadeClimber) {
-        window.arcadeClimber.resize();
-        window.arcadeClimber.render();
-      }
-    }, 50);
-
-    if (window.fractalBg) window.fractalBg.pulse(1.0);
+    this.init();
   }
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const mode = tab.dataset.mode;
-      switchMode(mode);
-    });
-  });
+  init() {
+    const viewportCanvas = document.getElementById("studio-viewport");
+    if (!viewportCanvas) return;
 
-  // Audio Toggle
-  const audioBtn = document.getElementById('audio-toggle-btn');
-  const audioIcon = document.getElementById('audio-icon');
-  if (audioBtn && audioIcon) {
-    audioBtn.addEventListener('click', () => {
-      const isSoundOn = window.soundFx.toggleMute();
-      audioIcon.textContent = isSoundOn ? '🔊' : '🔇';
-      window.ghostLeg.showToast(isSoundOn ? 'Sound Activated' : 'Audio Muted');
+    this.engine = new CanvasEngine(viewportCanvas, {
+      width: 1000,
+      height: 1333,
+      audio: this.audio
     });
+
+    this.engine.onCursorMove = (x, y) => this.updateCursorStatus(x, y);
+    this.engine.onViewChange = (zoom) => this.updateZoomStatus(zoom);
+    this.engine.colorStudio.onColorChange = (hex) => this.onColorChanged(hex);
+    this.engine.layerManager.onLayersChange = () => this.renderLayersList();
+
+    this.bindToolbar();
+    this.bindRightPanel();
+    this.bindModals();
+    this.bindShortcutsAndWindow();
+
+    // Default template: Iridescent Hydrangea
+    this.loadTemplate(ART_TEMPLATES[0]);
+    this.renderGalleryGrid();
+    this.renderLayersList();
+    this.renderPaletteSwatches();
+
+    this.showToast("Welcome to ITIA Studio! Select a tool or trace reference to start.", 4000);
   }
 
-  // Help & Documentation Modal
-  const rulesBtn = document.getElementById('rules-btn');
-  const rulesModal = document.getElementById('rules-modal');
-  const rulesCloseBtn = document.getElementById('rules-close-btn');
+  loadTemplate(template, asColoringBook = false) {
+    this.activeTemplate = template;
+    const titleEl = document.getElementById("active-artwork-title");
+    if (titleEl) titleEl.textContent = template.title;
 
-  if (rulesBtn && rulesModal) {
-    rulesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      rulesModal.classList.remove('hidden');
-    });
-  }
+    const genreEl = document.getElementById("active-artwork-genre");
+    if (genreEl) genreEl.textContent = template.genre;
 
-  if (rulesCloseBtn && rulesModal) {
-    rulesCloseBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      rulesModal.classList.add('hidden');
-    });
-  }
-
-  // Destiny Ceremony Modal Actions
-  const winnerModal = document.getElementById('destiny-winner-modal');
-  const modalCloseBtn = document.getElementById('modal-close-btn');
-  const modalCopyBtn = document.getElementById('modal-copy-summary-btn');
-
-  if (modalCloseBtn && winnerModal) {
-    modalCloseBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      winnerModal.classList.add('hidden');
-    });
-  }
-
-  if (modalCopyBtn) {
-    modalCopyBtn.addEventListener('click', () => {
-      copyDestinyResults();
-    });
-  }
-
-  // Export History Button
-  const exportHistoryBtn = document.getElementById('export-history-btn');
-  if (exportHistoryBtn) {
-    exportHistoryBtn.addEventListener('click', () => {
-      copyDestinyResults();
-    });
-  }
-
-  function copyDestinyResults() {
-    if (!window.ghostLeg) return;
-    const completed = window.ghostLeg.players.filter(p => p.completed);
-
-    if (completed.length === 0) {
-      window.ghostLeg.showToast('No completed rounds to copy yet!');
-      return;
+    if (template.recommendedBrush) {
+      this.selectBrushType(template.recommendedBrush);
     }
 
-    let summaryText = `⚡ ITIA // LADDER OF DESTINY RESULTS ⚡\n`;
-    summaryText += `═══════════════════════════════\n`;
+    const pipImage = document.getElementById("pip-image");
+    if (pipImage) pipImage.src = template.image;
 
-    completed.forEach((p, idx) => {
-      const prz = window.ghostLeg.prizes[p.endPrizeIndex];
-      summaryText += `${idx + 1}. ${p.name} ➔ ${prz.icon} ${prz.name}\n`;
-    });
+    this.engine.traceEngine.loadReference(template.image, (img) => {
+      this.engine.colorStudio.extractPaletteFromImage(img, 8);
+      this.renderPaletteSwatches();
 
-    summaryText += `═══════════════════════════════\n`;
-    summaryText += `I Think It's Art (@IThinkItsArt)\n`;
+      if (asColoringBook) {
+        const lineartLayer = this.engine.layerManager.layers[2];
+        if (lineartLayer) {
+          this.engine.traceEngine.bakeLineartToLayer(lineartLayer.ctx);
+          this.engine.traceEngine.setOpacity(0.15);
+          this.engine.layerManager.setActiveLayer(1);
+          this.selectTool("bucket");
+          this.showToast(`✨ Generated Coloring Book outlines for "${template.title}"! Switched to Paint Bucket.`, 4000);
+        }
+      } else {
+        this.engine.traceEngine.setMode(template.defaultTraceMode || "normal");
+        this.engine.traceEngine.setOpacity(0.5);
+        this.showToast(`Loaded "${template.title}" reference. Opacity at 50%. Ready to trace!`, 3000);
+      }
 
-    navigator.clipboard.writeText(summaryText).then(() => {
-      window.soundFx.playZap();
-      window.ghostLeg.showToast('✓ Destiny results copied to clipboard!');
-    }).catch(() => {
-      window.ghostLeg.showToast('Failed to copy to clipboard');
+      this.updateTraceControlsUI();
+      this.engine.requestRender();
     });
   }
 
-  // Share Arcade Record Button
-  const shareScoreBtn = document.getElementById('ascent-share-score-btn');
-  if (shareScoreBtn && window.arcadeClimber) {
-    shareScoreBtn.addEventListener('click', () => {
-      const text = `▲ ITIA // THE MAD ASCENT RECORD ▲\nAltitude: ${window.arcadeClimber.altitude}M | Score: ${window.arcadeClimber.score.toLocaleString()} | Max Combo: x${window.arcadeClimber.maxCombo}\nClimb the void with @IThinkItsArt!`;
-      navigator.clipboard.writeText(text).then(() => {
-        window.soundFx.playZap();
-        window.ghostLeg.showToast('✓ Score record copied!');
+  loadCustomImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const customTemplate = {
+          id: "custom_" + Date.now(),
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          genre: "Custom Reference",
+          image: e.target.result,
+          palette: [
+            { name: "Color 1", hex: "#ff1244" },
+            { name: "Color 2", hex: "#0a58f6" },
+            { name: "Color 3", hex: "#99ff00" },
+            { name: "Color 4", hex: "#000000" },
+            { name: "Color 5", hex: "#ffffff" }
+          ]
+        };
+        this.loadTemplate(customTemplate, false);
+        this.closeModal("gallery-modal");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  bindToolbar() {
+    // Tool buttons
+    document.querySelectorAll(".tool-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tool = btn.dataset.tool;
+        this.selectTool(tool);
+      });
+    });
+
+    // Brush Engine selectors
+    document.querySelectorAll(".brush-type-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const brush = btn.dataset.brush;
+        this.selectBrushType(brush);
+      });
+    });
+
+    // Size Slider
+    const sizeSlider = document.getElementById("brush-size-slider");
+    const sizeVal = document.getElementById("brush-size-val");
+    if (sizeSlider && sizeVal) {
+      sizeSlider.addEventListener("input", (e) => {
+        const s = parseInt(e.target.value, 10);
+        sizeVal.textContent = `${s}px`;
+        this.engine.brushEngine.setSize(s);
+      });
+    }
+
+    // Opacity Slider
+    const opacitySlider = document.getElementById("brush-opacity-slider");
+    const opacityVal = document.getElementById("brush-opacity-val");
+    if (opacitySlider && opacityVal) {
+      opacitySlider.addEventListener("input", (e) => {
+        const o = parseInt(e.target.value, 10) / 100;
+        opacityVal.textContent = `${Math.round(o * 100)}%`;
+        this.engine.brushEngine.setOpacity(o);
+      });
+    }
+
+    // Stabilizer Selector
+    const stabSelect = document.getElementById("stabilizer-select");
+    if (stabSelect) {
+      stabSelect.addEventListener("change", (e) => {
+        const val = parseFloat(e.target.value);
+        this.engine.brushEngine.setStabilizer(val);
+        this.audio.playClick();
+      });
+    }
+
+    // Symmetry Selector
+    const symSelect = document.getElementById("symmetry-select");
+    if (symSelect) {
+      symSelect.addEventListener("change", (e) => {
+        this.engine.brushEngine.setSymmetryMode(e.target.value);
+        this.audio.playClick();
+        this.engine.requestRender();
+        this.showToast(`Symmetry mode: ${e.target.options[e.target.selectedIndex].text}`, 2200);
+      });
+    }
+
+    // Undo / Redo
+    const undoBtn = document.getElementById("btn-undo");
+    const redoBtn = document.getElementById("btn-redo");
+    if (undoBtn) undoBtn.addEventListener("click", () => this.engine.undo());
+    if (redoBtn) redoBtn.addEventListener("click", () => this.engine.redo());
+
+    // Fit to Screen & Flip
+    const fitBtn = document.getElementById("btn-fit-screen");
+    const flipBtn = document.getElementById("btn-flip-h");
+    if (fitBtn) fitBtn.addEventListener("click", () => this.engine.fitToScreen());
+    if (flipBtn) flipBtn.addEventListener("click", () => {
+      this.engine.toggleFlipH();
+      this.audio.playClick();
+    });
+
+    // Sound toggle
+    const soundBtn = document.getElementById("btn-sound-toggle");
+    if (soundBtn) {
+      soundBtn.addEventListener("click", () => {
+        const unmuted = this.audio.toggleMute();
+        soundBtn.classList.toggle("muted", !unmuted);
+        soundBtn.setAttribute("title", unmuted ? "Mute Sound" : "Unmute Sound");
+        this.showToast(unmuted ? "Sound Effects Enabled" : "Sound Effects Muted", 1800);
+      });
+    }
+
+    // Zen Mode Toggle
+    const zenBtn = document.getElementById("btn-zen-mode");
+    const exitZenBtn = document.getElementById("btn-exit-zen");
+    const toggleZen = () => {
+      this.isZenMode = !this.isZenMode;
+      document.body.classList.toggle("zen-mode-active", this.isZenMode);
+      if (exitZenBtn) exitZenBtn.style.display = this.isZenMode ? "block" : "none";
+      this.audio.playClick();
+      this.showToast(this.isZenMode ? "Zen Mode: Press Tab to restore UI" : "Zen Mode exited", 2000);
+      setTimeout(() => this.engine.fitToScreen(), 100);
+    };
+    if (zenBtn) zenBtn.addEventListener("click", toggleZen);
+    if (exitZenBtn) exitZenBtn.addEventListener("click", toggleZen);
+    this.toggleZen = toggleZen;
+
+    // Floating Picture-in-Picture Reference Loupe
+    const pipBtn = document.getElementById("btn-toggle-pip");
+    const pipWindow = document.getElementById("pip-window");
+    const pipImage = document.getElementById("pip-image");
+    const pipCloseBtn = document.getElementById("btn-close-pip");
+    const pipHeader = document.getElementById("pip-header");
+
+    const togglePip = () => {
+      this.isPipVisible = !this.isPipVisible;
+      pipWindow.style.display = this.isPipVisible ? "flex" : "none";
+      if (this.isPipVisible && this.activeTemplate) {
+        pipImage.src = this.activeTemplate.image;
+      }
+      this.audio.playClick();
+    };
+
+    if (pipBtn) pipBtn.addEventListener("click", togglePip);
+    if (pipCloseBtn) pipCloseBtn.addEventListener("click", togglePip);
+
+    // Draggable PiP
+    if (pipHeader && pipWindow) {
+      let isDraggingPip = false;
+      let pipOffset = { x: 0, y: 0 };
+      pipHeader.addEventListener("mousedown", (e) => {
+        isDraggingPip = true;
+        pipOffset.x = e.clientX - pipWindow.offsetLeft;
+        pipOffset.y = e.clientY - pipWindow.offsetTop;
+      });
+      window.addEventListener("mousemove", (e) => {
+        if (isDraggingPip) {
+          pipWindow.style.left = `${Math.max(10, e.clientX - pipOffset.x)}px`;
+          pipWindow.style.top = `${Math.max(60, e.clientY - pipOffset.y)}px`;
+          pipWindow.style.right = "auto";
+          pipWindow.style.bottom = "auto";
+        }
+      });
+      window.addEventListener("mouseup", () => { isDraggingPip = false; });
+    }
+
+    // Speedpaint Timelapse Replay
+    const playTimelapseBtn = document.getElementById("btn-play-timelapse");
+    const timelapseBar = document.getElementById("timelapse-bar");
+    const timelapseProgress = document.getElementById("timelapse-progress");
+    const stopTimelapseBtn = document.getElementById("btn-stop-timelapse");
+
+    if (playTimelapseBtn) {
+      playTimelapseBtn.addEventListener("click", () => {
+        if (this.engine.timelapseLog.length === 0) {
+          this.showToast("Draw a few strokes first to watch your speedpaint replay!", 3000);
+          return;
+        }
+        timelapseBar.style.display = "flex";
+        timelapseProgress.style.width = "0%";
+        this.audio.playUndo(true);
+
+        this.engine.playTimelapse(this.timelapseSpeed, (prog) => {
+          timelapseProgress.style.width = `${Math.round(prog * 100)}%`;
+        }, () => {
+          this.showToast("✨ Speedpaint replay complete!", 2500);
+          setTimeout(() => {
+            timelapseBar.style.display = "none";
+          }, 1200);
+        });
+      });
+    }
+
+    if (stopTimelapseBtn) {
+      stopTimelapseBtn.addEventListener("click", () => {
+        this.engine.stopTimelapse();
+        timelapseBar.style.display = "none";
+        this.showToast("Speedpaint replay stopped", 1800);
+      });
+    }
+
+    document.querySelectorAll(".speed-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.timelapseSpeed = parseFloat(btn.dataset.speed);
+        this.audio.playClick();
       });
     });
   }
 
-  // Scenario Presets Buttons
-  document.querySelectorAll('.preset-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.preset-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      window.soundFx.playClick();
-      const presetKey = pill.dataset.preset;
-      window.ghostLeg.setupPresets(presetKey);
-      window.ghostLeg.resetRunners();
-      window.ghostLeg.render();
-      window.ghostLeg.showToast(`Switched scenario to: ${pill.textContent.trim()}`);
+  selectTool(tool) {
+    this.engine.activeTool = tool;
+    document.querySelectorAll(".tool-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.tool === tool);
     });
-  });
+    this.audio.playClick();
 
-  // Sub-tabs in Roster sidebar
-  const subTabs = document.querySelectorAll('.tab-sub');
-  const subContents = {
-    players: document.getElementById('subtab-players'),
-    prizes: document.getElementById('subtab-prizes'),
-    history: document.getElementById('subtab-history')
-  };
+    const brushSubmenu = document.getElementById("brush-engines-submenu");
+    if (brushSubmenu) {
+      brushSubmenu.style.display = (tool === "brush" || tool === "line") ? "flex" : "none";
+    }
+  }
 
-  subTabs.forEach(st => {
-    st.addEventListener('click', () => {
-      window.soundFx.playClick();
-      subTabs.forEach(t => t.classList.remove('active'));
-      st.classList.add('active');
+  selectBrushType(type) {
+    this.engine.brushEngine.setBrushType(type);
+    document.querySelectorAll(".brush-type-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.brush === type);
+    });
+    this.audio.playClick();
+  }
 
-      const target = st.dataset.sub;
-      Object.keys(subContents).forEach(k => {
-        if (subContents[k]) {
-          subContents[k].classList.toggle('active', k === target);
+  bindRightPanel() {
+    document.querySelectorAll(".dock-tab-btn").forEach(tab => {
+      tab.addEventListener("click", () => {
+        const targetTab = tab.dataset.tab;
+        this.activeRightTab = targetTab;
+        document.querySelectorAll(".dock-tab-btn").forEach(t => t.classList.toggle("active", t === tab));
+        document.querySelectorAll(".dock-panel-content").forEach(p => {
+          p.classList.toggle("active", p.dataset.panel === targetTab);
+        });
+        this.audio.playClick();
+      });
+    });
+
+    const traceOpacitySlider = document.getElementById("trace-opacity-slider");
+    const traceOpacityVal = document.getElementById("trace-opacity-val");
+    if (traceOpacitySlider && traceOpacityVal) {
+      traceOpacitySlider.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10) / 100;
+        traceOpacityVal.textContent = `${Math.round(val * 100)}%`;
+        this.engine.traceEngine.setOpacity(val);
+      });
+    }
+
+    document.querySelectorAll(".opacity-preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pct = parseInt(btn.dataset.pct, 10);
+        if (traceOpacitySlider) traceOpacitySlider.value = pct;
+        if (traceOpacityVal) traceOpacityVal.textContent = `${pct}%`;
+        this.engine.traceEngine.setOpacity(pct / 100);
+        this.audio.playClick();
+      });
+    });
+
+    document.querySelectorAll(".trace-mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.mode;
+        this.engine.traceEngine.setMode(mode);
+        document.querySelectorAll(".trace-mode-btn").forEach(b => b.classList.toggle("active", b === btn));
+        this.audio.playClick();
+        this.showToast(`Trace filter: ${btn.textContent.trim()}`, 2000);
+      });
+    });
+
+    const refVisBtn = document.getElementById("btn-toggle-ref-vis");
+    if (refVisBtn) {
+      refVisBtn.addEventListener("click", () => {
+        const vis = this.engine.traceEngine.toggleVisible();
+        refVisBtn.classList.toggle("active", vis);
+        refVisBtn.innerHTML = vis ? "<span>👁️ Reference Visible</span>" : "<span>👁️‍🗨️ Reference Hidden</span>";
+        this.audio.playClick();
+      });
+    }
+
+    const bakeBtn = document.getElementById("btn-bake-outlines");
+    if (bakeBtn) {
+      bakeBtn.addEventListener("click", () => {
+        const lineartLayer = this.engine.layerManager.layers[2];
+        if (lineartLayer) {
+          this.engine.traceEngine.bakeLineartToLayer(lineartLayer.ctx);
+          this.engine.layerManager.setActiveLayer(1);
+          this.selectTool("bucket");
+          this.engine.saveState();
+          this.engine.requestRender();
+          this.audio.playBucketFill();
+          this.showToast("🎨 Lines baked onto Lineart Layer! Now choose colors and use Paint Bucket to fill.", 4500);
+        }
+      });
+    }
+
+    const wipeToggle = document.getElementById("wipe-toggle-check");
+    const wipeSliderContainer = document.getElementById("wipe-slider-container");
+    const wipeSlider = document.getElementById("wipe-slider");
+    if (wipeToggle && wipeSlider) {
+      wipeToggle.addEventListener("change", (e) => {
+        this.isWipeActive = e.target.checked;
+        if (wipeSliderContainer) wipeSliderContainer.style.display = this.isWipeActive ? "block" : "none";
+        this.engine.traceEngine.setWipe(this.isWipeActive ? parseFloat(wipeSlider.value) : null);
+        this.audio.playClick();
+      });
+
+      wipeSlider.addEventListener("input", (e) => {
+        if (this.isWipeActive) {
+          this.engine.traceEngine.setWipe(parseFloat(e.target.value));
+        }
+      });
+    }
+
+    const hexInput = document.getElementById("hex-color-input");
+    const colorPickerNative = document.getElementById("native-color-picker");
+
+    if (hexInput) {
+      hexInput.addEventListener("change", (e) => {
+        let val = e.target.value.trim();
+        if (!val.startsWith("#")) val = "#" + val;
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+          this.engine.colorStudio.setColor(val, true, true);
+        }
+      });
+    }
+
+    if (colorPickerNative) {
+      colorPickerNative.addEventListener("input", (e) => {
+        this.engine.colorStudio.setColor(e.target.value, true, false);
+      });
+    }
+
+    const quickDropperBtn = document.getElementById("btn-quick-eyedropper");
+    if (quickDropperBtn) {
+      quickDropperBtn.addEventListener("click", () => {
+        this.selectTool("eyedropper");
+        this.showToast("Eyedropper active: Click anywhere on canvas or reference to pick color", 3000);
+      });
+    }
+
+    const addLayerBtn = document.getElementById("btn-add-layer");
+    const dupLayerBtn = document.getElementById("btn-duplicate-layer");
+    const mergeDownBtn = document.getElementById("btn-merge-down");
+    const deleteLayerBtn = document.getElementById("btn-delete-layer");
+    const clearLayerBtn = document.getElementById("btn-clear-layer");
+
+    if (addLayerBtn) addLayerBtn.addEventListener("click", () => {
+      this.engine.layerManager.addLayer();
+      this.engine.saveState();
+    });
+    if (dupLayerBtn) dupLayerBtn.addEventListener("click", () => {
+      this.engine.layerManager.duplicateActiveLayer();
+      this.engine.saveState();
+    });
+    if (mergeDownBtn) mergeDownBtn.addEventListener("click", () => {
+      this.engine.layerManager.mergeDown();
+      this.engine.saveState();
+    });
+    if (deleteLayerBtn) deleteLayerBtn.addEventListener("click", () => {
+      this.engine.layerManager.deleteActiveLayer();
+      this.engine.saveState();
+    });
+    if (clearLayerBtn) clearLayerBtn.addEventListener("click", () => {
+      if (confirm("Clear all content on the active layer?")) {
+        this.engine.layerManager.clearActiveLayer();
+        this.engine.saveState();
+      }
+    });
+
+    document.querySelectorAll(".bg-color-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const c = btn.dataset.color;
+        this.engine.layerManager.setBackgroundColor(c);
+        this.audio.playClick();
+        this.showToast(`Background set to: ${btn.textContent.trim()}`, 1800);
+      });
+    });
+
+    const multiLayerFillCheck = document.getElementById("fill-multi-layer-check");
+    if (multiLayerFillCheck) {
+      multiLayerFillCheck.addEventListener("change", (e) => {
+        this.engine.sampleAllLayersForFill = e.target.checked;
+        this.audio.playClick();
+        this.showToast(e.target.checked ? "Bucket samples lineart from ALL layers" : "Bucket fills within current layer only", 2500);
+      });
+    }
+  }
+
+  updateTraceControlsUI() {
+    const traceOpacitySlider = document.getElementById("trace-opacity-slider");
+    const traceOpacityVal = document.getElementById("trace-opacity-val");
+    if (traceOpacitySlider && traceOpacityVal) {
+      const pct = Math.round(this.engine.traceEngine.opacity * 100);
+      traceOpacitySlider.value = pct;
+      traceOpacityVal.textContent = `${pct}%`;
+    }
+
+    const currentMode = this.engine.traceEngine.mode;
+    document.querySelectorAll(".trace-mode-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.mode === currentMode);
+    });
+
+    const refThumb = document.getElementById("reference-dock-thumb");
+    if (refThumb && this.activeTemplate) {
+      refThumb.src = this.activeTemplate.image;
+    }
+  }
+
+  onColorChanged(hex) {
+    const previewDot = document.getElementById("active-color-preview-dot");
+    const hexInput = document.getElementById("hex-color-input");
+    const nativePicker = document.getElementById("native-color-picker");
+
+    if (previewDot) previewDot.style.backgroundColor = hex;
+    if (hexInput) hexInput.value = hex.toUpperCase();
+    if (nativePicker) nativePicker.value = hex;
+
+    this.renderRecentColors();
+  }
+
+  renderPaletteSwatches() {
+    const container = document.getElementById("curated-palette-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const swatches = this.activeTemplate ? this.activeTemplate.palette : [];
+    swatches.forEach(sw => {
+      const btn = document.createElement("button");
+      btn.className = "color-swatch-btn";
+      btn.style.backgroundColor = sw.hex;
+      btn.title = `${sw.name} (${sw.hex})`;
+      btn.addEventListener("click", () => {
+        this.engine.colorStudio.setColor(sw.hex, true, true);
+      });
+      container.appendChild(btn);
+    });
+
+    const extractedContainer = document.getElementById("extracted-palette-container");
+    if (extractedContainer && this.engine.colorStudio.extractedPalette.length > 0) {
+      extractedContainer.innerHTML = "";
+      this.engine.colorStudio.extractedPalette.forEach(hex => {
+        const btn = document.createElement("button");
+        btn.className = "color-swatch-btn extracted";
+        btn.style.backgroundColor = hex;
+        btn.title = `Sampled (${hex})`;
+        btn.addEventListener("click", () => {
+          this.engine.colorStudio.setColor(hex, true, true);
+        });
+        extractedContainer.appendChild(btn);
+      });
+    }
+
+    this.renderRecentColors();
+  }
+
+  renderRecentColors() {
+    const container = document.getElementById("recent-colors-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    this.engine.colorStudio.recentColors.slice(0, 14).forEach(hex => {
+      const btn = document.createElement("button");
+      btn.className = "color-swatch-btn mini";
+      btn.style.backgroundColor = hex;
+      btn.title = hex;
+      btn.addEventListener("click", () => {
+        this.engine.colorStudio.setColor(hex, true, true);
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  renderLayersList() {
+    const list = document.getElementById("layers-list-container");
+    if (!list) return;
+    list.innerHTML = "";
+
+    const lm = this.engine.layerManager;
+    for (let i = lm.layers.length - 1; i >= 0; i--) {
+      const layer = lm.layers[i];
+      const isActive = i === lm.activeLayerIndex;
+
+      const item = document.createElement("div");
+      item.className = `layer-item ${isActive ? "active" : ""}`;
+
+      const visBtn = document.createElement("button");
+      visBtn.className = `layer-action-icon ${layer.visible ? "visible" : "hidden"}`;
+      visBtn.innerHTML = layer.visible ? "👁️" : "✕";
+      visBtn.title = layer.visible ? "Hide Layer" : "Show Layer";
+      visBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lm.toggleVisibility(i);
+      });
+
+      const info = document.createElement("div");
+      info.className = "layer-info";
+      info.innerHTML = `
+        <span class="layer-name">${layer.name}</span>
+        <span class="layer-meta">${Math.round(layer.opacity * 100)}% · ${layer.blendMode}</span>
+      `;
+
+      const lockBtn = document.createElement("button");
+      lockBtn.className = `layer-action-icon ${layer.locked ? "locked" : ""}`;
+      lockBtn.innerHTML = layer.locked ? "🔒" : "🔓";
+      lockBtn.title = layer.locked ? "Unlock Layer" : "Lock Layer";
+      lockBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lm.toggleLock(i);
+      });
+
+      item.appendChild(visBtn);
+      item.appendChild(info);
+      item.appendChild(lockBtn);
+
+      item.addEventListener("click", () => {
+        lm.setActiveLayer(i);
+      });
+
+      list.appendChild(item);
+    }
+  }
+
+  renderGalleryGrid() {
+    const grid = document.getElementById("gallery-cards-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    ART_TEMPLATES.forEach(tpl => {
+      const card = document.createElement("div");
+      card.className = "gallery-card";
+      card.innerHTML = `
+        <div class="gallery-card-thumb-wrap">
+          <img src="${tpl.image}" alt="${tpl.title}" class="gallery-card-img" />
+          <span class="gallery-card-badge">${tpl.genre}</span>
+        </div>
+        <div class="gallery-card-body">
+          <h3 class="gallery-card-title">${tpl.title}</h3>
+          <p class="gallery-card-desc">${tpl.description}</p>
+          <div class="gallery-card-swatches">
+            ${tpl.palette.slice(0, 6).map(s => `<span class="mini-swatch" style="background-color: ${s.hex}" title="${s.name}"></span>`).join("")}
+          </div>
+          <div class="gallery-card-actions">
+            <button class="gallery-btn trace-btn" data-id="${tpl.id}">
+              <span>✏️ Trace Art</span>
+            </button>
+            <button class="gallery-btn colorbook-btn" data-id="${tpl.id}">
+              <span>🎨 Coloring Mode</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector(".trace-btn").addEventListener("click", () => {
+        this.loadTemplate(tpl, false);
+        this.closeModal("gallery-modal");
+      });
+
+      card.querySelector(".colorbook-btn").addEventListener("click", () => {
+        this.loadTemplate(tpl, true);
+        this.closeModal("gallery-modal");
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  bindModals() {
+    const openGalleryBtn = document.getElementById("btn-open-gallery");
+    const headerGalleryBtn = document.getElementById("btn-header-gallery");
+    if (openGalleryBtn) {
+      openGalleryBtn.addEventListener("click", () => this.openModal("gallery-modal"));
+    }
+    if (headerGalleryBtn) {
+      headerGalleryBtn.addEventListener("click", () => this.openModal("gallery-modal"));
+    }
+
+    const uploadInput = document.getElementById("custom-upload-input");
+    const uploadBtnHeader = document.getElementById("btn-header-upload");
+    if (uploadBtnHeader && uploadInput) {
+      uploadBtnHeader.addEventListener("click", () => uploadInput.click());
+    }
+
+    if (uploadInput) {
+      uploadInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          this.loadCustomImageFile(e.target.files[0]);
+        }
+      });
+    }
+
+    const dropzone = document.getElementById("gallery-dropzone");
+    if (dropzone) {
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+      dropzone.addEventListener("dragleave", () => {
+        dropzone.classList.remove("dragover");
+      });
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          this.loadCustomImageFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    const exportBtnHeader = document.getElementById("btn-header-export");
+    if (exportBtnHeader) {
+      exportBtnHeader.addEventListener("click", () => {
+        this.prepareExportModal();
+        this.openModal("export-modal");
+      });
+    }
+
+    document.querySelectorAll(".modal-close-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const modal = e.target.closest(".modal-backdrop");
+        if (modal) modal.classList.remove("open");
+      });
+    });
+
+    document.querySelectorAll(".modal-backdrop").forEach(backdrop => {
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) {
+          backdrop.classList.remove("open");
         }
       });
     });
-  });
 
-  // Randomize & Batch Name Buttons
-  const randomNamesBtn = document.getElementById('randomize-names-btn');
-  if (randomNamesBtn) {
-    randomNamesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      const randomPool = [
-        'Neo', 'Trinity', 'Morpheus', 'Cypher', 'Akira', 'Kaneda', 'Tetsuo', 'Motoko',
-        'Batou', 'Spike', 'Faye', 'Jet', 'Zero', 'Guts', 'Griffith', 'Casca', 'Vash'
-      ];
-      window.ghostLeg.players.forEach(p => {
-        p.name = randomPool[Math.floor(Math.random() * randomPool.length)];
+    // Side-by-Side Comparison Card Download
+    const downloadCardBtn = document.getElementById("btn-download-side-by-side");
+    if (downloadCardBtn) {
+      downloadCardBtn.addEventListener("click", () => {
+        const cardUrl = this.engine.exportSideBySideCard();
+        this.triggerDownload(cardUrl, `itia_comparison_card_${Date.now()}.png`);
+        this.showToast("✨ Downloaded Side-by-Side Comparison Card!", 3000);
       });
-      window.ghostLeg.renderUI();
-      window.ghostLeg.showToast('Contenders randomized!');
-    });
-  }
-
-  const pasteNamesBtn = document.getElementById('paste-names-btn');
-  if (pasteNamesBtn) {
-    pasteNamesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      const input = prompt("Paste contenders / Twitter handles / wallets (separated by lines or commas):", "Satoshi, Vitalik, Banksy, Beeple, Cipher, Ghost");
-      if (!input) return;
-      const parsed = input.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-      if (parsed.length === 0) return;
-
-      const count = Math.min(Math.max(parsed.length, 2), 10);
-      const slider = document.getElementById('ladder-count-slider');
-      const valEl = document.getElementById('ladder-count-val');
-      if (slider) {
-        slider.value = count;
-        if (valEl) valEl.textContent = count;
-      }
-
-      window.ghostLeg.setLineCount(count);
-      for (let i = 0; i < count; i++) {
-        if (parsed[i]) window.ghostLeg.players[i].name = parsed[i];
-      }
-      window.ghostLeg.renderUI();
-      window.ghostLeg.showToast(`✓ Imported ${count} contenders into ITIA Ladder!`);
-    });
-  }
-
-  const clearNamesBtn = document.getElementById('clear-names-btn');
-  if (clearNamesBtn) {
-    clearNamesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      window.ghostLeg.players.forEach((p, idx) => {
-        p.name = `Player ${idx + 1}`;
-      });
-      window.ghostLeg.renderUI();
-    });
-  }
-
-  const shufflePrizesBtn = document.getElementById('shuffle-prizes-btn');
-  if (shufflePrizesBtn) {
-    shufflePrizesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      window.ghostLeg.prizes.sort(() => Math.random() - 0.5);
-      window.ghostLeg.renderUI();
-      window.ghostLeg.showToast('Rewards shuffled!');
-    });
-  }
-
-  const presetPrizesBtn = document.getElementById('preset-prizes-btn');
-  if (presetPrizesBtn) {
-    presetPrizesBtn.addEventListener('click', () => {
-      window.soundFx.playClick();
-      window.ghostLeg.setupPresets(window.ghostLeg.currentPresetKey || 'giveaway');
-      window.ghostLeg.renderUI();
-      window.ghostLeg.showToast('Reset to standard presets.');
-    });
-  }
-
-  // Global Keyboard Navigation
-  window.addEventListener('keydown', (e) => {
-    // Mode switches
-    if (e.target.tagName === 'INPUT') return;
-
-    if (e.key === '1') switchMode('forge');
-    if (e.key === '2') switchMode('destiny');
-    if (e.key === '3') switchMode('ascent');
-    if (e.key === '4') switchMode('risk');
-
-    if (e.key.toLowerCase() === 'm') {
-      const isSoundOn = window.soundFx.toggleMute();
-      if (audioIcon) audioIcon.textContent = isSoundOn ? '🔊' : '🔇';
-      window.ghostLeg.showToast(isSoundOn ? 'Sound On' : 'Muted');
     }
 
-    if (e.key === 'Escape') {
-      if (winnerModal) winnerModal.classList.add('hidden');
-      if (rulesModal) rulesModal.classList.add('hidden');
-    }
-  });
+    const downloadPngBtn = document.getElementById("btn-download-png");
+    const downloadJpgBtn = document.getElementById("btn-download-jpg");
+    const copyClipboardBtn = document.getElementById("btn-copy-clipboard");
 
-  // Welcome Toast & Initial Sizing
-  setTimeout(() => {
-    if (window.wordForge) window.wordForge.resize();
-    window.ghostLeg.showToast('✦ ITIA WORD FORGE READY ✦');
-  }, 200);
+    if (downloadPngBtn) {
+      downloadPngBtn.addEventListener("click", () => {
+        const incRef = document.getElementById("export-include-ref")?.checked || false;
+        const dataUrl = this.engine.exportImage("png", 1.0, incRef);
+        this.triggerDownload(dataUrl, `itia_art_${Date.now()}.png`);
+        this.showToast("Artwork downloaded as PNG!", 2500);
+      });
+    }
+
+    if (downloadJpgBtn) {
+      downloadJpgBtn.addEventListener("click", () => {
+        const incRef = document.getElementById("export-include-ref")?.checked || false;
+        const dataUrl = this.engine.exportImage("jpeg", 0.95, incRef);
+        this.triggerDownload(dataUrl, `itia_art_${Date.now()}.jpg`);
+        this.showToast("Artwork downloaded as JPG!", 2500);
+      });
+    }
+
+    if (copyClipboardBtn) {
+      copyClipboardBtn.addEventListener("click", async () => {
+        try {
+          const incRef = document.getElementById("export-include-ref")?.checked || false;
+          const dataUrl = this.engine.exportImage("png", 1.0, incRef);
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          this.showToast("Copied artwork image to clipboard!", 3000);
+        } catch (err) {
+          console.warn("Clipboard copy failed", err);
+          this.showToast("Clipboard copy not supported by browser. Use Download instead.", 3000);
+        }
+      });
+    }
+
+    const shortcutsBtn = document.getElementById("btn-open-shortcuts");
+    if (shortcutsBtn) {
+      shortcutsBtn.addEventListener("click", () => this.openModal("shortcuts-modal"));
+    }
+  }
+
+  prepareExportModal() {
+    const previewImg = document.getElementById("export-preview-img");
+    const incRef = document.getElementById("export-include-ref")?.checked || false;
+    if (previewImg) {
+      previewImg.src = this.engine.exportImage("png", 0.9, incRef);
+    }
+  }
+
+  triggerDownload(dataUrl, filename) {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  openModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) {
+      m.classList.add("open");
+      this.audio.playClick();
+    }
+  }
+
+  closeModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) m.classList.remove("open");
+  }
+
+  bindShortcutsAndWindow() {
+    window.addEventListener("resize", () => {
+      this.engine.fitToScreen();
+    });
+
+    const zoomInBtn = document.getElementById("btn-zoom-in");
+    const zoomOutBtn = document.getElementById("btn-zoom-out");
+    if (zoomInBtn) zoomInBtn.addEventListener("click", () => this.engine.setZoom(this.engine.zoom * 1.2));
+    if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => this.engine.setZoom(this.engine.zoom * 0.83));
+
+    // Tab key toggles Zen Mode
+    window.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.code === "Tab") {
+        e.preventDefault();
+        if (this.toggleZen) this.toggleZen();
+      }
+    });
+  }
+
+  updateCursorStatus(x, y) {
+    const posEl = document.getElementById("status-cursor-pos");
+    if (posEl) posEl.textContent = `X: ${x}  Y: ${y}`;
+  }
+
+  updateZoomStatus(zoom) {
+    const zoomEl = document.getElementById("status-zoom-level");
+    const topZoomEl = document.getElementById("top-zoom-display");
+    const text = `${Math.round(zoom * 100)}%`;
+    if (zoomEl) zoomEl.textContent = text;
+    if (topZoomEl) topZoomEl.textContent = text;
+  }
+
+  showToast(message, duration = 2800) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = "studio-toast";
+    toast.textContent = message;
+
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add("visible"), 20);
+
+    setTimeout(() => {
+      toast.classList.remove("visible");
+      setTimeout(() => container.removeChild(toast), 300);
+    }, duration);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  window.app = new StudioApp();
 });

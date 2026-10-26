@@ -3,656 +3,604 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ITIA // THE LADDER - I Think It's Art</title>
-  <meta name="description" content="A high-intensity, avant-garde ladder game experience featuring Ghost Leg Fate Descent, Infinite Mad Ascent climber, and High-Stakes Risk Ladder. Powered by ITIA.">
+  <title>ITIA STUDIO // Trace & Paint Digital Art Canvas</title>
+  <meta name="description" content="An avant-garde digital art studio to trace, ink lineart, and color stunning masterpieces with pro brushes, smart flood fill, multi-layer canvas, and light-table trace filters. Powered by ITIA.">
   
-  <!-- Google Fonts -->
+  <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600;800&family=Outfit:wght@300;400;600;700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <!-- Real-time Generative Fractal Background Canvas -->
-  <canvas id="fractal-bg-canvas"></canvas>
+<body class="studio-dark-theme">
 
-  <!-- Sound & Fullscreen Quick Bar -->
-  <div class="top-nav-bar">
-    <div class="brand-crest">
-      <div class="itia-vertical-logo">
-        <span>I</span>
-        <span>T</span>
-        <span>I</span>
-        <span>A</span>
+  <!-- TOP HEADER / STUDIO CONTROL BAR -->
+  <header class="studio-topbar" id="studio-header">
+    <div class="topbar-left">
+      <div class="studio-logo" id="logo-branding">
+        <span class="logo-badge">ITIA</span>
+        <div class="logo-text">
+          <span class="logo-title">STUDIO</span>
+          <span class="logo-sub">TRACE & PAINT</span>
+        </div>
       </div>
-      <div class="brand-text">
-        <span class="brand-sub">I THINK IT'S ART</span>
-        <span class="brand-tagline">THE LADDER SUITE</span>
+
+      <div class="active-art-pill" id="btn-open-gallery" title="Click to choose a different artwork">
+        <span class="pill-sparkle">✦</span>
+        <span class="pill-title" id="active-artwork-title">Iridescent Hydrangea</span>
+        <span class="pill-genre" id="active-artwork-genre">Holographic Anime</span>
+        <span class="pill-chevron">▾</span>
       </div>
     </div>
 
-    <!-- Mode Selector Tabs -->
-    <div class="mode-tabs" role="tablist">
-      <button class="mode-tab active" data-mode="forge" id="tab-forge" role="tab" aria-selected="true">
-        <span class="tab-glyph">✦</span>
-        <span class="tab-title">WORD FORGE</span>
-        <span class="tab-badge">MAKE ITIA</span>
+    <!-- Center Navigation / Quick Actions -->
+    <div class="topbar-center">
+      <button class="topbar-btn" id="btn-header-gallery" title="Browse Masterpieces Gallery">
+        <span class="btn-icon">🖼️</span>
+        <span class="btn-text">Gallery</span>
       </button>
-      <button class="mode-tab" data-mode="destiny" id="tab-destiny" role="tab" aria-selected="false">
-        <span class="tab-glyph">⚡</span>
-        <span class="tab-title">LADDER OF DESTINY</span>
-        <span class="tab-badge">GHOST LEG</span>
+
+      <button class="topbar-btn" id="btn-header-upload" title="Upload your own photo or art to trace">
+        <span class="btn-icon">📤</span>
+        <span class="btn-text">Upload Custom</span>
       </button>
-      <button class="mode-tab" data-mode="ascent" id="tab-ascent" role="tab" aria-selected="false">
-        <span class="tab-glyph">▲</span>
-        <span class="tab-title">MAD ASCENT</span>
-        <span class="tab-badge">ARCADE CLIMB</span>
+      <input type="file" id="custom-upload-input" accept="image/*" style="display: none;">
+
+      <div class="topbar-divider"></div>
+
+      <!-- Symmetry Mode Dropdown -->
+      <div class="symmetry-select-wrap" title="Mirror drawing in real-time across canvas axes">
+        <span class="symmetry-icon">🪞</span>
+        <select id="symmetry-select" class="topbar-select">
+          <option value="none">Symmetry: Off</option>
+          <option value="vertical">Vertical Mirror</option>
+          <option value="horizontal">Horizontal Mirror</option>
+          <option value="radial4">4-Way Kaleidoscope</option>
+        </select>
+      </div>
+
+      <!-- Quick Wipe Comparison Toggle -->
+      <label class="wipe-toggle-label" title="Compare original artwork with your drawing using a sliding curtain">
+        <input type="checkbox" id="wipe-toggle-check">
+        <span class="toggle-slider"></span>
+        <span class="toggle-text">Split Compare</span>
+      </label>
+
+      <!-- Floating Ref Loupe Toggle -->
+      <button class="topbar-btn" id="btn-toggle-pip" title="Open floating Picture-in-Picture Reference Loupe">
+        <span class="btn-icon">🔍</span>
+        <span class="btn-text">Ref Loupe</span>
       </button>
-      <button class="mode-tab" data-mode="risk" id="tab-risk" role="tab" aria-selected="false">
-        <span class="tab-glyph">◈</span>
-        <span class="tab-title">RISK LADDER</span>
-        <span class="tab-badge">MULTIPLIER</span>
+
+      <!-- Speedpaint Timelapse Replay -->
+      <button class="topbar-btn timelapse-btn" id="btn-play-timelapse" title="Watch your artwork come to life stroke-by-stroke!">
+        <span class="btn-icon">▶</span>
+        <span class="btn-text">Timelapse</span>
       </button>
     </div>
 
-    <!-- Quick Utilities -->
-    <div class="nav-actions">
-      <button class="icon-btn" id="audio-toggle-btn" title="Toggle Audio (M)" aria-label="Toggle Audio">
-        <span id="audio-icon">🔊</span>
-        <span class="btn-tooltip">SOUND ON</span>
+    <!-- Right Controls -->
+    <div class="topbar-right">
+      <!-- Zoom controls -->
+      <div class="zoom-pill">
+        <button class="icon-btn-micro" id="btn-zoom-out" title="Zoom Out (Wheel Down)">−</button>
+        <span class="zoom-display" id="top-zoom-display">100%</span>
+        <button class="icon-btn-micro" id="btn-zoom-in" title="Zoom In (Wheel Up)">+</button>
+        <button class="icon-btn-micro" id="btn-fit-screen" title="Fit Canvas to Screen (F)">Fit</button>
+      </div>
+
+      <!-- Canvas Flip -->
+      <button class="topbar-icon-btn" id="btn-flip-h" title="Flip Canvas Horizontally (H)">
+        <span>⇄</span>
       </button>
-      <button class="icon-btn" id="rules-btn" title="Help & Info" aria-label="Game Info">
+
+      <!-- Zen Mode (Hide UI) -->
+      <button class="topbar-icon-btn" id="btn-zen-mode" title="Zen Mode: Hide all UI for fullscreen painting (Tab)">
+        <span>⛶</span>
+      </button>
+
+      <!-- Undo / Redo -->
+      <div class="history-pill">
+        <button class="topbar-icon-btn" id="btn-undo" title="Undo (Ctrl+Z)">
+          <span>↩</span>
+        </button>
+        <button class="topbar-icon-btn" id="btn-redo" title="Redo (Ctrl+Y)">
+          <span>↪</span>
+        </button>
+      </div>
+
+      <!-- Sound FX Toggle -->
+      <button class="topbar-icon-btn" id="btn-sound-toggle" title="Toggle Tactile Audio FX">
+        <span class="sound-on">🔊</span>
+        <span class="sound-off">🔇</span>
+      </button>
+
+      <!-- Keyboard Shortcuts -->
+      <button class="topbar-icon-btn" id="btn-open-shortcuts" title="Keyboard Shortcuts (?)">
         <span>?</span>
       </button>
+
+      <!-- Export / Save Button -->
+      <button class="primary-export-btn" id="btn-header-export" title="Export High-Res Artwork">
+        <span class="export-icon">💾</span>
+        <span>Save & Export</span>
+      </button>
     </div>
-  </div>
+  </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="app-main-viewport">
+  <!-- MAIN STUDIO WORKSPACE -->
+  <main class="studio-workspace" id="studio-main">
     
-    <!-- ============================================== -->
-    <!-- MODE 0: WORD FORGE (MAKE THE WORD ITIA) -->
-    <!-- ============================================== -->
-    <section class="game-view-section active" id="view-forge">
-      <div class="forge-workspace">
-        
-        <!-- Forge HUD Header -->
-        <div class="forge-hud glass-panel">
-          <div class="hud-metric highlight">
-            <span class="metric-label">ITIA FORGED</span>
-            <span class="metric-val" id="forge-words-count">0</span>
-          </div>
-          <div class="hud-metric">
-            <span class="metric-label">SCORE</span>
-            <span class="metric-val" id="forge-score-count">0</span>
-          </div>
-          <div class="hud-metric highlight">
-            <span class="metric-label">COMBO</span>
-            <span class="metric-val" id="forge-combo-count">x1</span>
-          </div>
-          <div class="hud-metric">
-            <span class="metric-label">ART UNLOCKED</span>
-            <span class="metric-val" id="forge-art-unlocked-badge">0/6</span>
-          </div>
-          <div class="hud-metric">
-            <span class="metric-label">NEXT DROP</span>
-            <span class="metric-val" id="forge-timer-count" style="color: var(--accent-cyan);">NEXT: [ I ]</span>
-          </div>
-        </div>
-
-        <!-- Forge Stage & Canvas -->
-        <div class="forge-arena-wrap glass-panel">
-          <div class="forge-canvas-container" id="forge-canvas-container">
-            <canvas id="forge-canvas"></canvas>
-
-            <!-- Synthesis Celebration Banner -->
-            <div class="forge-synthesis-banner glass-panel hidden" id="forge-synthesis-banner">
-              <span class="synthesis-crest">✦ ITIA FORGED ✦</span>
-              <h2 id="forged-art-title">GENESIS SINGULARITY</h2>
-              <span id="forged-art-sub">SYNTHESIZED: Fractal Tendril Synthesis</span>
-            </div>
-
-            <!-- Start / Game Over Screen Overlay -->
-            <div class="forge-screen-overlay" id="forge-start-overlay">
-              <div class="overlay-card glass-panel">
-                <div class="overlay-eyebrow">ITIA // SUIKA PHYSICS DROP</div>
-                <h2 class="overlay-title" id="forge-overlay-title">MAKE THE WORD ITIA</h2>
-                <p class="overlay-desc" id="forge-overlay-desc">
-                  Drop glowing letter spheres into the vessel. Collide identical runes to merge and evolve them up the chain until forging the giant <strong>ITIA Art Singularity</strong>!
-                </p>
-
-                <div class="forge-pedestal-preview">
-                  <span class="preview-slot" style="color: #00f0ff;">I</span>
-                  <span style="color: var(--text-dim); align-self: center;">➔</span>
-                  <span class="preview-slot" style="color: #ff2a5f;">T</span>
-                  <span style="color: var(--text-dim); align-self: center;">➔</span>
-                  <span class="preview-slot" style="color: #f59e0b;">I</span>
-                  <span style="color: var(--text-dim); align-self: center;">➔</span>
-                  <span class="preview-slot" style="color: #10b981;">A</span>
-                  <span style="color: var(--text-dim); align-self: center;">➔</span>
-                  <span class="preview-slot" style="color: #a855f7; font-size: 18px;">ITIA</span>
-                </div>
-
-                <button class="cyber-btn primary-btn large-btn" id="forge-start-btn">
-                  <span class="btn-glow"></span>
-                  <span class="btn-text">IGNITE THE FORGE [CLICK OR SPACE]</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Bottom Action Bar -->
-          <div class="forge-bottom-actions">
-            <button class="cyber-btn secondary-btn" id="forge-reset-slots-btn">
-              <span>✕ CLEAR VESSEL</span>
-            </button>
-            <div class="forge-hint-ticker">
-              ✦ Aim with Mouse or ◄/► Keys. Click, Space, or ▼ to Drop Spheres!
-            </div>
-            <button class="cyber-btn tertiary-btn" id="forge-gallery-btn">
-              <span>🖼️ ART GALLERY</span>
-            </button>
-          </div>
-
-        </div>
-
+    <!-- LEFT FLOATING TOOLBAR -->
+    <aside class="studio-left-toolbar" id="studio-toolbar">
+      <!-- Primary Tool Selectors -->
+      <div class="tools-group">
+        <button class="tool-btn active" data-tool="brush" title="Brush / Inking Tool (B)">
+          <span class="tool-icon">🖌️</span>
+          <span class="tool-hotkey">B</span>
+        </button>
+        <button class="tool-btn" data-tool="bucket" title="Smart Flood Fill / Paint Bucket (G)">
+          <span class="tool-icon">🪣</span>
+          <span class="tool-hotkey">G</span>
+        </button>
+        <button class="tool-btn" data-tool="eyedropper" title="Color Eyedropper (I)">
+          <span class="tool-icon">💧</span>
+          <span class="tool-hotkey">I</span>
+        </button>
+        <button class="tool-btn" data-tool="line" title="Straight Line Guide (Hold Shift)">
+          <span class="tool-icon">📏</span>
+          <span class="tool-hotkey">L</span>
+        </button>
+        <button class="tool-btn" data-tool="hand" title="Pan / Hand Tool (Spacebar + Drag)">
+          <span class="tool-icon">✋</span>
+          <span class="tool-hotkey">Space</span>
+        </button>
       </div>
-    </section>
 
-    <!-- ============================================== -->
-    <!-- MODE 1: LADDER OF DESTINY (GHOST LEG / AMIDAKUJI) -->
-    <!-- ============================================== -->
-    <section class="game-view-section" id="view-destiny">
-      <div class="destiny-workspace">
-        
-        <!-- Left Control Sidebar -->
-        <aside class="destiny-controls-sidebar glass-panel">
-          <div class="panel-header">
-            <span class="panel-eyebrow">CONFIG // AMIDAKUJI</span>
-            <h3>FATE GENERATOR</h3>
-          </div>
+      <div class="toolbar-separator"></div>
 
-          <!-- Quick Presets -->
-          <div class="control-group">
-            <label class="control-label">QUICK SCENARIOS</label>
-            <div class="preset-pill-grid">
-              <button class="preset-pill active" data-preset="giveaway">🎁 Giveaway</button>
-              <button class="preset-pill" data-preset="royale">💀 Battle Royale</button>
-              <button class="preset-pill" data-preset="crypto">💎 ITIA Whitelist</button>
-              <button class="preset-pill" data-preset="roulette">⚡ Dare / Fate</button>
-            </div>
-          </div>
-
-          <!-- Lines & Density Sliders -->
-          <div class="control-group">
-            <div class="slider-header">
-              <label for="ladder-count-slider" class="control-label">PATHS / PLAYERS</label>
-              <span class="slider-val" id="ladder-count-val">6</span>
-            </div>
-            <input type="range" id="ladder-count-slider" min="2" max="10" value="6" step="1" class="cyber-range">
-          </div>
-
-          <div class="control-group">
-            <div class="slider-header">
-              <label for="rung-density-slider" class="control-label">RUNG CHAOS LEVEL</label>
-              <span class="slider-val" id="rung-density-val">Standard (18)</span>
-            </div>
-            <input type="range" id="rung-density-slider" min="6" max="36" value="18" step="2" class="cyber-range">
-          </div>
-
-          <!-- Modifiers & Fog of War -->
-          <div class="control-group">
-            <label class="control-label">SUSPENSE MODIFIERS</label>
-            <div class="toggle-row">
-              <label class="switch-container">
-                <input type="checkbox" id="fog-of-war-toggle">
-                <span class="switch-slider"></span>
-                <span class="switch-label">Fog of War (Blind Rungs)</span>
-              </label>
-            </div>
-            <div class="toggle-row">
-              <label class="switch-container">
-                <input type="checkbox" id="cinematic-zoom-toggle" checked>
-                <span class="switch-slider"></span>
-                <span class="switch-label">Dynamic Tension Camera</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="sidebar-actions">
-            <button class="cyber-btn primary-btn" id="start-destiny-btn">
-              <span class="btn-glow"></span>
-              <span class="btn-text">⚡ LAUNCH DESCENT</span>
-            </button>
-            <button class="cyber-btn secondary-btn" id="simultaneous-race-btn">
-              <span class="btn-text">💥 ALL-OUT CHAOS RUN</span>
-            </button>
-            <div class="btn-sub-row">
-              <button class="cyber-btn tertiary-btn" id="reroll-rungs-btn" title="Randomize Rungs">
-                🎲 RE-ROLL RUNGS
-              </button>
-              <button class="cyber-btn tertiary-btn" id="clear-rungs-btn" title="Clear All Rungs">
-                ✕ CLEAR
-              </button>
-            </div>
-          </div>
-
-          <!-- Hint -->
-          <div class="sidebar-hint">
-            <span class="hint-bullet">✦</span> Tip: Click between vertical lines on the canvas to add or remove custom rungs!
-          </div>
-        </aside>
-
-        <!-- Center Stage: The Ladder Arena -->
-        <div class="destiny-arena-wrap glass-panel">
-          
-          <!-- Top Runner Pins (Interactive Header) -->
-          <div class="destiny-top-header" id="destiny-top-header">
-            <!-- Dynamic Player Cards injected here -->
-          </div>
-
-          <!-- The Canvas Stage -->
-          <div class="destiny-canvas-container" id="destiny-canvas-container">
-            <canvas id="destiny-canvas"></canvas>
-            
-            <!-- In-game Suspense Overlay (For dramatic slow-mo & countdown) -->
-            <div class="canvas-floating-status" id="destiny-floating-status">
-              <span id="destiny-status-text">CLICK A RUNNER OR HIT LAUNCH</span>
-            </div>
-          </div>
-
-          <!-- Bottom Rewards Grid (Interactive Footer) -->
-          <div class="destiny-bottom-footer" id="destiny-bottom-footer">
-            <!-- Dynamic Prize Cards injected here -->
-          </div>
-
-        </div>
-
-        <!-- Right Side: Live Results & Roster Editor -->
-        <aside class="destiny-results-sidebar glass-panel">
-          <div class="panel-header">
-            <span class="panel-eyebrow">ROSTER & REWARDS</span>
-            <h3>EDIT FATES</h3>
-          </div>
-
-          <div class="tabs-subnav">
-            <button class="tab-sub active" data-sub="players">PLAYERS (<span id="player-count-badge">6</span>)</button>
-            <button class="tab-sub" data-sub="prizes">REWARDS</button>
-            <button class="tab-sub" data-sub="history">HISTORY</button>
-          </div>
-
-          <!-- Players Tab -->
-          <div class="sub-tab-content active" id="subtab-players">
-            <div class="quick-batch-btns">
-              <button class="micro-btn" id="randomize-names-btn">🎲 Randomize</button>
-              <button class="micro-btn" id="paste-names-btn">📋 Paste List</button>
-              <button class="micro-btn" id="clear-names-btn">Clear</button>
-            </div>
-            <div class="roster-editor-list" id="players-editor-list">
-              <!-- Dynamically populated player edit rows -->
-            </div>
-          </div>
-
-          <!-- Prizes Tab -->
-          <div class="sub-tab-content" id="subtab-prizes">
-            <div class="quick-batch-btns">
-              <button class="micro-btn" id="preset-prizes-btn">⭐ Standard Presets</button>
-              <button class="micro-btn" id="shuffle-prizes-btn">🔀 Shuffle</button>
-            </div>
-            <div class="roster-editor-list" id="prizes-editor-list">
-              <!-- Dynamically populated prize edit rows -->
-            </div>
-          </div>
-
-          <!-- History Tab -->
-          <div class="sub-tab-content" id="subtab-history">
-            <div class="history-list" id="destiny-history-list">
-              <div class="history-empty">No rounds played yet. Launch a fate descent!</div>
-            </div>
-            <button class="micro-btn full-width" id="export-history-btn">📋 Copy Summary</button>
-          </div>
-        </aside>
-
+      <!-- Brush Engine Types -->
+      <div class="brush-engines-group" id="brush-engines-submenu">
+        <span class="group-label">BRUSHES</span>
+        <button class="brush-type-btn active" data-brush="studio_pen" title="Studio Fine Liner: Clean vector-sharp lines for precise tracing">
+          <span class="brush-dot studio-pen"></span>
+          <span class="brush-name">Fine Liner</span>
+        </button>
+        <button class="brush-type-btn" data-brush="pencil" title="Sketch Pencil: Analog graphite texture for initial lay-in">
+          <span class="brush-dot pencil"></span>
+          <span class="brush-name">Pencil</span>
+        </button>
+        <button class="brush-type-btn" data-brush="marker" title="Copic Marker: Semi-transparent layered tone">
+          <span class="brush-dot marker"></span>
+          <span class="brush-name">Marker</span>
+        </button>
+        <button class="brush-type-btn" data-brush="airbrush" title="Soft Airbrush: Buttery smooth shading & gradients">
+          <span class="brush-dot airbrush"></span>
+          <span class="brush-name">Airbrush</span>
+        </button>
+        <button class="brush-type-btn" data-brush="neon_glow" title="Neon Glow: Luminous bloom brush for tears, eyes & glowing blooms">
+          <span class="brush-dot neon-glow"></span>
+          <span class="brush-name">Neon Glow</span>
+        </button>
+        <button class="brush-type-btn" data-brush="sparkle" title="Sparkle Dust: Glowing 4-point anime star flares">
+          <span class="brush-dot sparkle"></span>
+          <span class="brush-name">Sparkle</span>
+        </button>
+        <button class="brush-type-btn" data-brush="sakura_petals" title="Sakura Petals: Scattered cherry blossoms">
+          <span class="brush-dot petals"></span>
+          <span class="brush-name">Petals</span>
+        </button>
+        <button class="brush-type-btn" data-brush="halftone" title="Manga Halftone: Screentone dot matrix">
+          <span class="brush-dot halftone"></span>
+          <span class="brush-name">Halftone</span>
+        </button>
+        <button class="brush-type-btn" data-brush="eraser" title="Precision Eraser (E)">
+          <span class="brush-dot eraser"></span>
+          <span class="brush-name">Eraser</span>
+        </button>
       </div>
-    </section>
 
-    <!-- ============================================== -->
-    <!-- MODE 2: MAD ASCENT (ARCADE REFLEX LADDER CLIMBER) -->
-    <!-- ============================================== -->
-    <section class="game-view-section" id="view-ascent">
-      <div class="ascent-workspace">
-        
-        <!-- Ascent HUD Header -->
-        <div class="ascent-hud glass-panel">
-          <div class="hud-metric">
-            <span class="metric-label">ALTITUDE</span>
-            <span class="metric-val" id="ascent-altitude">0<span class="unit">M</span></span>
-          </div>
-          <div class="hud-metric">
-            <span class="metric-label">SCORE</span>
-            <span class="metric-val" id="ascent-score">0</span>
-          </div>
-          <div class="hud-metric highlight">
-            <span class="metric-label">COMBO</span>
-            <span class="metric-val" id="ascent-combo">x1</span>
-          </div>
-          <div class="hud-metric itia-hud-metric">
-            <span class="metric-label">ITIA MONOLITH</span>
-            <div class="itia-hud-matrix" id="ascent-itia-matrix">
-              <span class="matrix-char" id="matrix-I1" data-char="I">I</span>
-              <span class="matrix-char" id="matrix-T" data-char="T">T</span>
-              <span class="matrix-char" id="matrix-I2" data-char="I">I</span>
-              <span class="matrix-char active" id="matrix-A" data-char="A">A</span>
-            </div>
-          </div>
-          <div class="hud-metric">
-            <span class="metric-label">BEST CLIMB</span>
-            <span class="metric-val" id="ascent-best">0<span class="unit">M</span></span>
-          </div>
-          <div class="hud-metric energy-metric">
-            <span class="metric-label">HYPER OVERDRIVE</span>
-            <div class="energy-bar-wrap">
-              <div class="energy-bar-fill" id="ascent-energy-fill"></div>
-            </div>
-          </div>
+      <div class="toolbar-separator"></div>
+
+      <!-- Quick Sliders: Size & Opacity -->
+      <div class="quick-slider-box">
+        <div class="slider-header">
+          <span>Size</span>
+          <span class="slider-val" id="brush-size-val">6px</span>
         </div>
+        <input type="range" id="brush-size-slider" min="1" max="100" value="6" class="studio-slider">
+      </div>
 
-        <!-- The Arcade Play Arena -->
-        <div class="ascent-arena-container glass-panel">
-          <canvas id="ascent-canvas"></canvas>
+      <div class="quick-slider-box">
+        <div class="slider-header">
+          <span>Opacity</span>
+          <span class="slider-val" id="brush-opacity-val">100%</span>
+        </div>
+        <input type="range" id="brush-opacity-slider" min="1" max="100" value="100" class="studio-slider">
+      </div>
 
-          <!-- Start / Game Over Screen Overlay -->
-          <div class="ascent-screen-overlay" id="ascent-overlay">
-            <div class="overlay-card glass-panel" id="ascent-start-card">
-              <div class="overlay-eyebrow">ITIA // CYBER-REFLEX</div>
-              <h2 class="overlay-title">THE MAD ASCENT</h2>
-              <p class="overlay-desc">
-                Ascend the infinite shifting fractal ladder into the ITIA void.
-                Quickly step left or right onto solid rungs. Dodge cracked traps, jump over void gaps, and outclimb the rising thermal disintegrator!
-              </p>
-              
-              <div class="controls-guide-grid">
-                <div class="guide-item">
-                  <div class="key-combo"><kbd>A</kbd> / <kbd>◄</kbd></div>
-                  <span>Step Left</span>
-                </div>
-                <div class="guide-item">
-                  <div class="key-combo"><kbd>D</kbd> / <kbd>►</kbd></div>
-                  <span>Step Right</span>
-                </div>
-                <div class="guide-item">
-                  <div class="key-combo"><kbd>SPACE</kbd> / <kbd>▲</kbd></div>
-                  <span>Jump Gap</span>
-                </div>
-              </div>
+      <!-- Stabilizer / Line Smoothing -->
+      <div class="quick-select-box">
+        <span class="select-label">Stabilizer</span>
+        <select id="stabilizer-select" class="studio-select" title="Line smoothing for jitter-free hand drawing">
+          <option value="0">Off (Raw)</option>
+          <option value="0.45">Smooth</option>
+          <option value="0.65" selected>Pro Inker</option>
+          <option value="0.85">Maximum</option>
+        </select>
+      </div>
 
-              <button class="cyber-btn primary-btn large-btn" id="ascent-play-btn">
-                <span class="btn-glow"></span>
-                <span class="btn-text">INITIALIZE ASCENT [SPACE]</span>
+      <!-- Active Color Preview & Quick Swatch -->
+      <div class="active-color-widget">
+        <div class="active-color-circle" id="active-color-preview-dot" style="background-color: #ff1244;" title="Active Drawing Color"></div>
+      </div>
+    </aside>
+
+    <!-- VIEWPORT CANVAS CONTAINER -->
+    <div class="studio-canvas-container" id="canvas-container">
+      <canvas id="studio-viewport"></canvas>
+
+      <!-- Floating Wipe Comparison Overlay -->
+      <div class="floating-wipe-overlay" id="wipe-slider-container" style="display: none;">
+        <span class="wipe-tag left">Original Art</span>
+        <input type="range" id="wipe-slider" min="0" max="1" step="0.01" value="0.5" class="wipe-range-input">
+        <span class="wipe-tag right">Your Drawing</span>
+      </div>
+
+      <!-- Floating Draggable Reference Window (PiP Loupe) -->
+      <div class="floating-pip-window" id="pip-window" style="display: none;">
+        <div class="pip-header" id="pip-header">
+          <span class="pip-icon">🔍</span>
+          <span class="pip-title">Reference Loupe</span>
+          <button class="pip-close-btn" id="btn-close-pip" title="Close Loupe">✕</button>
+        </div>
+        <div class="pip-body">
+          <img src="" id="pip-image" alt="Reference Artwork">
+        </div>
+      </div>
+
+      <!-- Floating Timelapse Playback Bar -->
+      <div class="floating-timelapse-bar" id="timelapse-bar" style="display: none;">
+        <div class="timelapse-badge">
+          <span class="pulse-dot"></span>
+          <span>SPEEDPAINT REPLAY</span>
+        </div>
+        <div class="timelapse-progress-wrap">
+          <div class="timelapse-progress-fill" id="timelapse-progress"></div>
+        </div>
+        <div class="timelapse-speed-btns">
+          <button class="speed-btn active" data-speed="1">1x</button>
+          <button class="speed-btn" data-speed="2">2x</button>
+          <button class="speed-btn" data-speed="5">5x</button>
+        </div>
+        <button class="timelapse-stop-btn" id="btn-stop-timelapse" title="Exit Timelapse">⏹ Exit</button>
+      </div>
+
+      <!-- Floating Zen Exit Button -->
+      <button class="zen-exit-btn" id="btn-exit-zen" style="display: none;" title="Exit Zen Mode (Tab)">
+        <span>Exit Zen (Tab)</span>
+      </button>
+    </div>
+
+    <!-- RIGHT FLOATING STUDIO DOCK -->
+    <aside class="studio-right-dock" id="studio-dock">
+      <!-- Dock Tabs Header -->
+      <div class="dock-tabs-header">
+        <button class="dock-tab-btn active" data-tab="trace" id="tab-btn-trace">
+          <span class="tab-icon">✏️</span>
+          <span>Trace Art</span>
+        </button>
+        <button class="dock-tab-btn" data-tab="color" id="tab-btn-color">
+          <span class="tab-icon">🎨</span>
+          <span>Color Studio</span>
+        </button>
+        <button class="dock-tab-btn" data-tab="layers" id="tab-btn-layers">
+          <span class="tab-icon">📚</span>
+          <span>Layers</span>
+        </button>
+      </div>
+
+      <!-- TAB PANEL 1: TRACE & LIGHT TABLE -->
+      <div class="dock-panel-content active" data-panel="trace" id="panel-trace">
+        <div class="panel-section">
+          <div class="section-title-row">
+            <span class="section-title">Reference Image</span>
+            <button class="pill-action-btn" id="btn-toggle-ref-vis">
+              <span>👁️ Reference Visible</span>
+            </button>
+          </div>
+
+          <div class="ref-preview-card">
+            <img src="assets/art_iridescent_hydrangea.jpg" alt="Reference Artwork" id="reference-dock-thumb" class="ref-thumb-img">
+            <div class="ref-card-overlay">
+              <button class="ref-swap-btn" id="btn-swap-artwork" onclick="document.getElementById('btn-open-gallery').click();">
+                Change Art ▾
               </button>
             </div>
-
-            <!-- Game Over Card -->
-            <div class="overlay-card glass-panel hidden" id="ascent-gameover-card">
-              <div class="overlay-eyebrow danger-eyebrow">VOID PLUMMET</div>
-              <h2 class="overlay-title danger-text">ASCENT TERMINATED</h2>
-              
-              <div class="gameover-stats-grid">
-                <div class="stat-box">
-                  <span class="stat-name">FINAL ALTITUDE</span>
-                  <span class="stat-value" id="go-altitude">0M</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-name">TOTAL SCORE</span>
-                  <span class="stat-value" id="go-score">0</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-name">MAX COMBO</span>
-                  <span class="stat-value" id="go-combo">x0</span>
-                </div>
-                <div class="stat-box highlight-box">
-                  <span class="stat-name">ART GRADE</span>
-                  <span class="stat-value" id="go-grade">D</span>
-                </div>
-              </div>
-
-              <div class="gameover-actions">
-                <button class="cyber-btn primary-btn" id="ascent-retry-btn">
-                  <span class="btn-glow"></span>
-                  <span class="btn-text">RE-ENTER THE LADDER</span>
-                </button>
-                <button class="cyber-btn secondary-btn" id="ascent-share-score-btn">
-                  <span class="btn-text">📋 COPY RECORD</span>
-                </button>
-              </div>
-            </div>
           </div>
+        </div>
 
-          <!-- Touch / Mobile On-Screen Controls for Arcade -->
-          <div class="ascent-mobile-controls">
-            <button class="touch-control-btn" id="touch-left-btn" aria-label="Step Left">
-              <span>◄ LEFT</span>
+        <!-- Light Table Opacity -->
+        <div class="panel-section">
+          <div class="section-title-row">
+            <span class="section-title">Trace Opacity (Light Table)</span>
+            <span class="val-badge" id="trace-opacity-val">50%</span>
+          </div>
+          <input type="range" id="trace-opacity-slider" min="0" max="100" value="50" class="studio-slider full">
+          <div class="opacity-presets-row">
+            <button class="opacity-preset-btn" data-pct="15">15%</button>
+            <button class="opacity-preset-btn" data-pct="35">35%</button>
+            <button class="opacity-preset-btn" data-pct="50">50%</button>
+            <button class="opacity-preset-btn" data-pct="75">75%</button>
+            <button class="opacity-preset-btn" data-pct="100">100%</button>
+          </div>
+        </div>
+
+        <!-- Trace Filter Modes -->
+        <div class="panel-section">
+          <span class="section-title">Trace Filter Mode</span>
+          <div class="trace-modes-grid">
+            <button class="trace-mode-btn active" data-mode="normal" title="Normal full-color artwork">
+              <span class="mode-icon">🎨</span>
+              <span class="mode-name">True Color</span>
             </button>
-            <button class="touch-control-btn center-jump" id="touch-jump-btn" aria-label="Jump Gap">
-              <span>▲ JUMP</span>
+            <button class="trace-mode-btn" data-mode="blueprint" title="Manga blue sketch lines for easy tracing">
+              <span class="mode-icon">📐</span>
+              <span class="mode-name">Blueprint</span>
             </button>
-            <button class="touch-control-btn" id="touch-right-btn" aria-label="Step Right">
-              <span>RIGHT ►</span>
+            <button class="trace-mode-btn" data-mode="lineart" title="Real-time edge detection line outlines">
+              <span class="mode-icon">✒️</span>
+              <span class="mode-name">Lineart</span>
+            </button>
+            <button class="trace-mode-btn" data-mode="high_contrast" title="High contrast silhouette">
+              <span class="mode-icon">◐</span>
+              <span class="mode-name">Contrast</span>
+            </button>
+            <button class="trace-mode-btn" data-mode="inverted" title="Inverted negative outlines">
+              <span class="mode-icon">◑</span>
+              <span class="mode-name">Inverted</span>
             </button>
           </div>
         </div>
 
+        <!-- Instant Coloring Sheet Conversion -->
+        <div class="panel-section highlight-box">
+          <div class="highlight-box-header">
+            <span class="highlight-badge">ONE-CLICK MAGIC</span>
+            <h4 class="highlight-title">Generate Coloring Book</h4>
+          </div>
+          <p class="highlight-desc">Extracts clean lineart from the artwork directly onto your Lineart Layer so you can immediately color it in with the Paint Bucket!</p>
+          <button class="action-glow-btn" id="btn-bake-outlines">
+            <span>✨ Bake Lines & Start Coloring</span>
+          </button>
+        </div>
       </div>
-    </section>
 
-    <!-- ============================================== -->
-    <!-- MODE 3: RISK LADDER (HIGH STAKES MULTIPLIER TOWER) -->
-    <!-- ============================================== -->
-    <section class="game-view-section" id="view-risk">
-      <div class="risk-workspace">
-        
-        <div class="risk-tower-card glass-panel">
-          <div class="panel-header text-center">
-            <span class="panel-eyebrow">HIGH-STAKES ASCENSION</span>
-            <h3>THE MULTIPLIER TOWER</h3>
-            <p class="panel-sub">Climb rung by rung. With each step, the reward surges, but the ladder becomes increasingly unstable. Cash out before the void snaps your rung!</p>
+      <!-- TAB PANEL 2: COLOR STUDIO -->
+      <div class="dock-panel-content" data-panel="color" id="panel-color">
+        <!-- Color Input & Native Spectrum -->
+        <div class="panel-section">
+          <div class="section-title-row">
+            <span class="section-title">Selected Color</span>
+            <button class="pill-action-btn" id="btn-quick-eyedropper">
+              <span>💧 Pick from Canvas</span>
+            </button>
           </div>
 
-          <div class="risk-play-stage">
-            
-            <!-- Far Left: The ITIA Monolith Totem Pillar -->
-            <div class="itia-monolith-totem" id="risk-totem-pillar">
-              <div class="totem-glyph" data-tier="I1" id="totem-I1">
-                <span>I</span>
-                <span class="glyph-label">APEX // 500x</span>
-              </div>
-              <div class="totem-glyph" data-tier="T" id="totem-T">
-                <span>T</span>
-                <span class="glyph-label">TITAN // 60x</span>
-              </div>
-              <div class="totem-glyph" data-tier="I2" id="totem-I2">
-                <span>I</span>
-                <span class="glyph-label">INNER // 6.5x</span>
-              </div>
-              <div class="totem-glyph active" data-tier="A" id="totem-A">
-                <span>A</span>
-                <span class="glyph-label">BASE // 1.1x</span>
-              </div>
-            </div>
-
-            <!-- Left: Multiplier Ladder Rung Visualizer -->
-            <div class="risk-ladder-track" id="risk-ladder-track">
-              <!-- Dynamically populated rungs from 500x down to 1.1x -->
-            </div>
-
-            <!-- Right: Play Status & Interactive Actions -->
-            <div class="risk-control-hub">
-              
-              <div class="risk-status-display glass-panel">
-                <div class="status-metric">
-                  <span class="label">CURRENT RUNG</span>
-                  <span class="val" id="risk-curr-step">GROUND</span>
-                </div>
-                <div class="status-metric highlight">
-                  <span class="label">CURRENT MULTIPLIER</span>
-                  <span class="val pulse" id="risk-curr-mult">1.00x</span>
-                </div>
-                <div class="status-metric">
-                  <span class="label">CURRENT VALUE</span>
-                  <span class="val" id="risk-curr-val">100 ITIA</span>
-                </div>
-                <div class="status-metric danger">
-                  <span class="label">BREAK PROBABILITY</span>
-                  <span class="val" id="risk-fail-chance">0%</span>
-                </div>
-              </div>
-
-              <!-- Stake Selector -->
-              <div class="risk-stake-selector">
-                <label class="control-label">STARTING ENTRY TICKET</label>
-                <div class="stake-chips-row">
-                  <button class="chip-btn active" data-stake="100">100</button>
-                  <button class="chip-btn" data-stake="250">250</button>
-                  <button class="chip-btn" data-stake="500">500</button>
-                  <button class="chip-btn" data-stake="1000">1,000</button>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="risk-action-buttons">
-                <button class="cyber-btn primary-btn large-btn" id="risk-step-btn">
-                  <span class="btn-glow"></span>
-                  <span class="btn-text">🪜 STEP UP NEXT RUNG</span>
-                </button>
-                <button class="cyber-btn cashout-btn large-btn disabled" id="risk-cashout-btn">
-                  <span class="btn-text">💰 SECURE CASH OUT</span>
-                </button>
-              </div>
-
-              <div class="risk-log-feed" id="risk-log-feed">
-                <div class="log-item system">Choose a ticket stake and step onto the ladder.</div>
-              </div>
-
+          <div class="color-picker-row">
+            <input type="color" id="native-color-picker" value="#ff1244" class="studio-color-input" title="Open Color Spectrum">
+            <div class="hex-input-wrapper">
+              <span class="hex-prefix">#</span>
+              <input type="text" id="hex-color-input" value="#FF1244" maxlength="7" class="studio-text-input">
             </div>
           </div>
         </div>
 
+        <!-- Curated Palette (Artwork-Tailored) -->
+        <div class="panel-section">
+          <div class="section-title-row">
+            <span class="section-title">Masterpiece Palette</span>
+            <span class="sub-label">Tailored Swatches</span>
+          </div>
+          <div class="swatches-grid" id="curated-palette-container"></div>
+        </div>
+
+        <!-- Extracted Colors Strip -->
+        <div class="panel-section">
+          <div class="section-title-row">
+            <span class="section-title">Sampled Reference Colors</span>
+            <span class="sub-label">AI Quantized</span>
+          </div>
+          <div class="swatches-grid" id="extracted-palette-container"></div>
+        </div>
+
+        <!-- Recent Swatches -->
+        <div class="panel-section">
+          <span class="section-title">Recent Colors</span>
+          <div class="swatches-strip" id="recent-colors-container"></div>
+        </div>
       </div>
-    </section>
+
+      <!-- TAB PANEL 3: LAYERS STACK -->
+      <div class="dock-panel-content" data-panel="layers" id="panel-layers">
+        <!-- Layer Action Bar -->
+        <div class="layers-actions-bar">
+          <button class="layer-tool-btn" id="btn-add-layer" title="Add New Layer">＋ Add</button>
+          <button class="layer-tool-btn" id="btn-duplicate-layer" title="Duplicate Active Layer">⧉ Dup</button>
+          <button class="layer-tool-btn" id="btn-merge-down" title="Merge Active Layer Down">⤓ Merge</button>
+          <button class="layer-tool-btn danger" id="btn-delete-layer" title="Delete Active Layer">🗑️ Del</button>
+          <button class="layer-tool-btn" id="btn-clear-layer" title="Clear Active Layer">✕ Clear</button>
+        </div>
+
+        <!-- Multi-layer Fill Option -->
+        <div class="layer-option-row">
+          <label class="studio-checkbox-label" title="When active, the paint bucket stops at lineart lines on other layers!">
+            <input type="checkbox" id="fill-multi-layer-check" checked>
+            <span>Smart Bucket: Sample lines from ALL layers</span>
+          </label>
+        </div>
+
+        <!-- Layers Stack Container -->
+        <div class="layers-stack-list" id="layers-list-container"></div>
+
+        <!-- Canvas Background Color -->
+        <div class="panel-section">
+          <span class="section-title">Canvas Backdrop</span>
+          <div class="bg-color-presets">
+            <button class="bg-color-btn active" data-color="#ffffff">White Paper</button>
+            <button class="bg-color-btn" data-color="#181a20">Dark Slate</button>
+            <button class="bg-color-btn" data-color="#f5efe6">Warm Cream</button>
+            <button class="bg-color-btn" data-color="transparent">Transparent</button>
+          </div>
+        </div>
+      </div>
+    </aside>
 
   </main>
 
-  <!-- ============================================== -->
-  <!-- MODALS & OVERLAYS -->
-  <!-- ============================================== -->
+  <!-- BOTTOM STATUS BAR -->
+  <footer class="studio-statusbar" id="studio-status">
+    <div class="status-left">
+      <span class="status-item" id="status-cursor-pos">X: 0  Y: 0</span>
+      <span class="status-divider">|</span>
+      <span class="status-item" id="status-canvas-size">1000 × 1333 px</span>
+      <span class="status-divider">|</span>
+      <span class="status-item" id="status-zoom-level">100%</span>
+    </div>
 
-  <!-- Victory & Ceremony Modal for Ladder of Destiny -->
-  <div class="cyber-modal-backdrop hidden" id="destiny-winner-modal">
-    <div class="cyber-modal-card glass-panel">
-      <div class="modal-crest">
-        <span class="modal-star">✦</span>
-        <span class="modal-eyebrow">DESTINY REVEALED</span>
-        <span class="modal-star">✦</span>
-      </div>
-      <h2 class="modal-title" id="winner-modal-title">THE FATE CEREMONY</h2>
-      
-      <div class="winner-hero-box" id="winner-hero-box">
-        <!-- Highlights the latest runner's fate -->
+    <div class="status-center">
+      <span class="hint-pill">💡 B: Brush · G: Bucket · I: Dropper · Space: Pan · Tab: Zen Mode · Ctrl+Z: Undo</span>
+    </div>
+
+    <div class="status-right">
+      <span class="brand-sub-badge">ITIA // I THINK IT'S ART</span>
+    </div>
+  </footer>
+
+  <!-- MODAL: ARTWORK GALLERY -->
+  <div class="modal-backdrop" id="gallery-modal">
+    <div class="modal-container gallery-modal-content">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h2 class="modal-title">Masterpiece Artwork Gallery</h2>
+          <p class="modal-subtitle">Choose a reference to trace and color, or upload your own image</p>
+        </div>
+        <button class="modal-close-btn" title="Close Gallery">✕</button>
       </div>
 
-      <div class="modal-results-summary" id="modal-all-results-summary">
-        <!-- Full list of all arrivals -->
-      </div>
-
-      <div class="modal-actions-row">
-        <button class="cyber-btn primary-btn" id="modal-close-btn">
-          <span class="btn-text">PROCEED</span>
+      <!-- Upload Dropzone Bar -->
+      <div class="gallery-dropzone-bar" id="gallery-dropzone">
+        <span class="dropzone-icon">📁</span>
+        <div class="dropzone-info">
+          <span class="dropzone-title">Drag & Drop Any Image Here</span>
+          <span class="dropzone-sub">or click "Browse Files" to trace photos, manga, or illustrations</span>
+        </div>
+        <button class="btn-browse-file" onclick="document.getElementById('custom-upload-input').click();">
+          Browse File
         </button>
-        <button class="cyber-btn secondary-btn" id="modal-copy-summary-btn">
-          <span class="btn-text">📋 SHARE RESULTS</span>
-        </button>
+      </div>
+
+      <!-- 5 Artworks Grid -->
+      <div class="gallery-cards-grid" id="gallery-cards-grid"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: EXPORT & SAVE -->
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal-container export-modal-content">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h2 class="modal-title">Export Artwork</h2>
+          <p class="modal-subtitle">Download your traced and colored creation in crystal-clear quality</p>
+        </div>
+        <button class="modal-close-btn" title="Close Export">✕</button>
+      </div>
+
+      <div class="export-body">
+        <div class="export-preview-column">
+          <img src="" alt="Artwork Export Preview" id="export-preview-img" class="export-preview-image">
+        </div>
+
+        <div class="export-controls-column">
+          <div class="export-option-group">
+            <span class="option-title">Reference Layer</span>
+            <label class="studio-checkbox-label">
+              <input type="checkbox" id="export-include-ref">
+              <span>Include Reference Image in final export</span>
+            </label>
+            <p class="option-desc">Leave unchecked to export ONLY your hand-drawn lines, colors, and shading.</p>
+          </div>
+
+          <div class="export-buttons-stack">
+            <!-- Social Side-by-side Card -->
+            <button class="export-action-btn card-export-btn" id="btn-download-side-by-side">
+              <span class="btn-icon">✨</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Side-by-Side Comparison Card</span>
+                <span class="btn-sub-text">Original vs My Drawing poster ready for social media</span>
+              </div>
+            </button>
+
+            <button class="export-action-btn primary" id="btn-download-png">
+              <span class="btn-icon">🖼️</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Download PNG (Lossless)</span>
+                <span class="btn-sub-text">Recommended for lineart & crisp digital colors</span>
+              </div>
+            </button>
+
+            <button class="export-action-btn secondary" id="btn-download-jpg">
+              <span class="btn-icon">📷</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Download JPG (Compressed)</span>
+                <span class="btn-sub-text">Optimized for social media sharing</span>
+              </div>
+            </button>
+
+            <button class="export-action-btn tertiary" id="btn-copy-clipboard">
+              <span class="btn-icon">📋</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Copy to Clipboard</span>
+                <span class="btn-sub-text">Instant paste into Discord, Twitter, or docs</span>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Help & Rules Modal -->
-  <div class="cyber-modal-backdrop hidden" id="rules-modal">
-    <div class="cyber-modal-card glass-panel wide-modal">
-      <div class="modal-crest">
-        <span class="modal-eyebrow">ARCHIVE // DOCUMENTATION</span>
+  <!-- MODAL: KEYBOARD SHORTCUTS -->
+  <div class="modal-backdrop" id="shortcuts-modal">
+    <div class="modal-container shortcuts-modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Studio Keyboard Shortcuts</h2>
+        <button class="modal-close-btn" title="Close Shortcuts">✕</button>
       </div>
-      <h2 class="modal-title">THE ITIA LADDER SUITE</h2>
-      
-      <div class="rules-content-body">
-        <div class="rule-section">
-          <h3>⚡ 1. LADDER OF DESTINY (GHOST LEG / 사다리타기)</h3>
-          <p>
-            The iconic Japanese <em>Amidakuji</em> / Korean <em>Sadari-tagi</em> ladder game. 
-            Vertical paths link each player at the top with a fate at the bottom. 
-            As your marker descends, you <strong>MUST</strong> turn at every horizontal rung encountered.
-            Click between vertical lines to craft custom rungs, or toggle <strong>Fog of War</strong> for heart-racing blind suspense!
-          </p>
-        </div>
-
-        <div class="rule-section">
-          <h3>▲ 2. MAD ASCENT (REFLEX ARCADE CLIMBER)</h3>
-          <p>
-            An endless vertical reflex test. Tap Left/Right to hit the rungs, jump void hazards with Space, and maintain rapid momentum to ignite <strong>Overdrive Mode</strong> with 10x score multipliers. Stay ahead of the ascending void disintegrator!
-          </p>
-        </div>
-
-        <div class="rule-section">
-          <h3>◈ 3. RISK LADDER (TOWER OF MULTIPLIERS)</h3>
-          <p>
-            High stakes rung climb. Each step scales your multiplier toward 500x. Weigh the probability of rung failure against the glory of ascending to Art God status. Cash out before the collapse!
-          </p>
-        </div>
-      </div>
-
-      <div class="modal-actions-row">
-        <button class="cyber-btn primary-btn" id="rules-close-btn">
-          <span class="btn-text">ACKNOWLEDGE & PLAY</span>
-        </button>
+      <div class="shortcuts-grid">
+        <div class="shortcut-row"><kbd>B</kbd><span>Brush / Inker Tool</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Precision Eraser</span></div>
+        <div class="shortcut-row"><kbd>G</kbd><span>Smart Paint Bucket (Flood Fill)</span></div>
+        <div class="shortcut-row"><kbd>I</kbd><span>Color Eyedropper</span></div>
+        <div class="shortcut-row"><kbd>Space + Drag</kbd><span>Pan / Move Canvas</span></div>
+        <div class="shortcut-row"><kbd>Mouse Wheel</kbd><span>Zoom In / Out</span></div>
+        <div class="shortcut-row"><kbd>Shift + Drag</kbd><span>Draw Straight Line Guide</span></div>
+        <div class="shortcut-row"><kbd>Tab</kbd><span>Toggle Zen Mode (Hide UI)</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Toggle Reference Visibility</span></div>
+        <div class="shortcut-row"><kbd>F</kbd><span>Fit Canvas to Screen</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>Flip Canvas Horizontally</span></div>
+        <div class="shortcut-row"><kbd>[</kbd> / <kbd>]</kbd><span>Decrease / Increase Brush Size</span></div>
+        <div class="shortcut-row"><kbd>Ctrl + Z</kbd><span>Undo</span></div>
+        <div class="shortcut-row"><kbd>Ctrl + Y</kbd><span>Redo</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ITIA Art Forge Gallery Modal -->
-  <div class="cyber-modal-backdrop hidden" id="forge-gallery-modal">
-    <div class="cyber-modal-card glass-panel wide-modal">
-      <div class="modal-crest">
-        <span class="modal-star">✦</span>
-        <span class="modal-eyebrow">SYNTHESIZED ARCHIVE</span>
-        <span class="modal-star">✦</span>
-      </div>
-      <h2 class="modal-title">THE ITIA COLLECTION</h2>
-      <p class="panel-sub">Each time you assemble the word I · T · I · A in the forge, a fine art creation is synthesized into the permanent collection.</p>
-      
-      <div class="forge-gallery-grid" id="forge-gallery-grid">
-        <!-- Injected dynamically -->
-      </div>
-
-      <div class="modal-actions-row">
-        <button class="cyber-btn primary-btn" id="forge-gallery-close">
-          <span class="btn-text">RETURN TO FORGE</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification System -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Scripts -->
-  <script src="src/audio.js"></script>
-  <script src="src/fractalBackground.js"></script>
-  <script src="src/ghostLegGame.js"></script>
-  <script src="src/arcadeClimber.js"></script>
-  <script src="src/riskLadder.js"></script>
-  <script src="src/wordForge.js"></script>
-  <script src="src/main.js"></script>
+  <!-- SCRIPTS -->
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
