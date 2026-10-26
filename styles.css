@@ -840,6 +840,38 @@ html, body {
   color: #000;
 }
 
+.quick-switcher-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.studio-select.full {
+  width: 100%;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.studio-select.full:hover {
+  border-color: var(--accent-cyan);
+}
+
+.studio-select.full option {
+  background: var(--bg-surface);
+  color: #fff;
+  padding: 4px;
+}
+
 /* Opacity Presets */
 .opacity-presets-row {
   display: flex;
@@ -1307,19 +1339,24 @@ html, body {
 
 /* Gallery Modal Specifics */
 .gallery-modal-content {
-  width: 900px;
+  width: 980px;
   max-width: 95vw;
+  height: 86vh;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .gallery-dropzone-bar {
-  margin: 16px 24px 0 24px;
+  margin: 14px 24px 0 24px;
   background: rgba(255, 255, 255, 0.03);
   border: 2px dashed rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  padding: 14px 20px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
@@ -1368,11 +1405,13 @@ html, body {
 }
 
 .gallery-cards-grid {
-  padding: 20px 24px;
+  padding: 18px 24px 24px 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 18px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .gallery-card {
@@ -1382,33 +1421,46 @@ html, body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
 .gallery-card:hover {
-  border-color: var(--border-medium);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-cyan);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+}
+
+.gallery-card.active-artwork-card {
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
 }
 
 .gallery-card-thumb-wrap {
   position: relative;
   width: 100%;
-  height: 220px;
+  height: 140px;
   background: #000;
+  overflow: hidden;
 }
 
 .gallery-card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-card:hover .gallery-card-img {
+  transform: scale(1.05);
 }
 
 .gallery-card-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   color: var(--accent-cyan);
   font-size: 10px;
@@ -1418,16 +1470,45 @@ html, body {
   border-radius: 6px;
 }
 
+.current-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent-cyan);
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
 .gallery-card-body {
-  padding: 14px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
+  background: rgba(16, 18, 26, 0.6);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-difficulty {
+  font-size: 9px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .gallery-card-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
 }
@@ -1435,8 +1516,8 @@ html, body {
 .gallery-card-desc {
   font-size: 11px;
   color: var(--text-secondary);
-  line-height: 1.4;
-  height: 32px;
+  line-height: 1.35;
+  height: 30px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -1447,26 +1528,26 @@ html, body {
 .gallery-card-swatches {
   display: flex;
   gap: 5px;
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .mini-swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
 }
 
 .gallery-card-actions {
   display: flex;
   gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .gallery-btn {
   flex: 1;
-  padding: 8px 6px;
-  border-radius: 8px;
+  padding: 7px 6px;
+  border-radius: 6px;
   border: none;
   font-family: var(--font-sans);
   font-size: 11px;

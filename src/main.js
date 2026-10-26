@@ -69,6 +69,11 @@ class StudioApp {
     const pipImage = document.getElementById("pip-image");
     if (pipImage) pipImage.src = template.image;
 
+    const quickArtSelect = document.getElementById("quick-art-select");
+    if (quickArtSelect && template) {
+      quickArtSelect.value = template.id;
+    }
+
     this.engine.traceEngine.loadReference(template.image, (img) => {
       this.engine.colorStudio.extractPaletteFromImage(img, 8);
       this.renderPaletteSwatches();
@@ -339,6 +344,20 @@ class StudioApp {
         this.audio.playClick();
       });
     });
+
+    // Quick Artwork Dropdown Switcher
+    const quickArtSelect = document.getElementById("quick-art-select");
+    if (quickArtSelect) {
+      quickArtSelect.innerHTML = ART_TEMPLATES.map(t => `<option value="${t.id}">${t.title} (${t.genre})</option>`).join("");
+      quickArtSelect.value = this.activeTemplate?.id || "";
+      quickArtSelect.addEventListener("change", (e) => {
+        const chosen = ART_TEMPLATES.find(t => t.id === e.target.value);
+        if (chosen) {
+          this.loadTemplate(chosen, false);
+          this.renderGalleryGrid();
+        }
+      });
+    }
 
     const traceOpacitySlider = document.getElementById("trace-opacity-slider");
     const traceOpacityVal = document.getElementById("trace-opacity-val");
@@ -629,38 +648,46 @@ class StudioApp {
     grid.innerHTML = "";
 
     ART_TEMPLATES.forEach(tpl => {
+      const isCurrent = this.activeTemplate && this.activeTemplate.id === tpl.id;
       const card = document.createElement("div");
-      card.className = "gallery-card";
+      card.className = `gallery-card ${isCurrent ? "active-artwork-card" : ""}`;
+      card.setAttribute("title", `Click to load "${tpl.title}"`);
       card.innerHTML = `
         <div class="gallery-card-thumb-wrap">
           <img src="${tpl.image}" alt="${tpl.title}" class="gallery-card-img" />
           <span class="gallery-card-badge">${tpl.genre}</span>
+          ${isCurrent ? '<span class="current-badge">✓ ACTIVE</span>' : ''}
         </div>
         <div class="gallery-card-body">
-          <h3 class="gallery-card-title">${tpl.title}</h3>
+          <div class="card-title-row">
+            <h3 class="gallery-card-title">${tpl.title}</h3>
+            <span class="card-difficulty">${tpl.difficulty}</span>
+          </div>
           <p class="gallery-card-desc">${tpl.description}</p>
           <div class="gallery-card-swatches">
             ${tpl.palette.slice(0, 6).map(s => `<span class="mini-swatch" style="background-color: ${s.hex}" title="${s.name}"></span>`).join("")}
           </div>
           <div class="gallery-card-actions">
-            <button class="gallery-btn trace-btn" data-id="${tpl.id}">
+            <button class="gallery-btn trace-btn" data-id="${tpl.id}" title="Trace over reference with light table">
               <span>✏️ Trace Art</span>
             </button>
-            <button class="gallery-btn colorbook-btn" data-id="${tpl.id}">
-              <span>🎨 Coloring Mode</span>
+            <button class="gallery-btn colorbook-btn" data-id="${tpl.id}" title="Auto-extract lineart and start coloring with bucket">
+              <span>🎨 Color Book</span>
             </button>
           </div>
         </div>
       `;
 
-      card.querySelector(".trace-btn").addEventListener("click", () => {
-        this.loadTemplate(tpl, false);
+      // Clicking anywhere on the card loads the artwork!
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".colorbook-btn")) {
+          e.stopPropagation();
+          this.loadTemplate(tpl, true);
+        } else {
+          this.loadTemplate(tpl, false);
+        }
         this.closeModal("gallery-modal");
-      });
-
-      card.querySelector(".colorbook-btn").addEventListener("click", () => {
-        this.loadTemplate(tpl, true);
-        this.closeModal("gallery-modal");
+        this.renderGalleryGrid();
       });
 
       grid.appendChild(card);
