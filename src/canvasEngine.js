@@ -34,9 +34,13 @@ export class CanvasEngine {
     this.brushEngine = new BrushEngine(this.audio);
     this.colorStudio = new ColorStudio(this.audio);
 
-    // Active tool: "brush", "bucket", "eyedropper", "line", "hand"
+    // Active tool: "brush", "bucket", "eyedropper", "line", "hand", "eraser"
     this.activeTool = "brush";
     this.sampleAllLayersForFill = true;
+    this.bucketTolerance = 35;
+    this.bucketExpansion = 1;
+    this.bucketGapClosure = true;
+    this.onToolChange = null;
 
     // Composite canvas
     this.compositeCanvas = document.createElement("canvas");
@@ -60,13 +64,85 @@ export class CanvasEngine {
     this.onCursorMove = null;
     this.onViewChange = null;
 
-    // Shift key straight line tracking
-    this.shiftStart = null;
-    this.currentPointerPos = null;
+    // Physical Studio Substrate: "cold_press", "linen_canvas", "toned_kraft", "smooth_bristol", "none"
+    this.paperTexture = "cold_press";
+    this.paperPattern = null;
+    this.gridGuide = "none"; // "none", "rule_of_thirds", "academic_3x3"
 
     this.initEvents();
+    this.initPaperTexture();
     this.saveState();
     this.fitToScreen();
+    this.requestRender();
+  }
+
+  initPaperTexture() {
+    if (this.paperTexture === "none") {
+      this.paperPattern = null;
+      return;
+    }
+    const patternCanvas = document.createElement("canvas");
+    patternCanvas.width = 160;
+    patternCanvas.height = 160;
+    const pCtx = patternCanvas.getContext("2d");
+
+    if (this.paperTexture === "cold_press") {
+      const imgData = pCtx.createImageData(160, 160);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const noise = (Math.random() - 0.5) * 26;
+        const v = Math.min(255, Math.max(0, 246 + noise));
+        d[i] = v;
+        d[i+1] = Math.max(0, v - 3);
+        d[i+2] = Math.max(0, v - 9);
+        d[i+3] = 48; // tooth
+      }
+      pCtx.putImageData(imgData, 0, 0);
+      pCtx.strokeStyle = "rgba(100, 75, 55, 0.14)";
+      pCtx.lineWidth = 0.8;
+      for (let j = 0; j < 14; j++) {
+        pCtx.beginPath();
+        const fx = Math.random() * 160;
+        const fy = Math.random() * 160;
+        pCtx.moveTo(fx, fy);
+        pCtx.lineTo(fx + (Math.random() - 0.5) * 16, fy + (Math.random() - 0.5) * 16);
+        pCtx.stroke();
+      }
+    } else if (this.paperTexture === "linen_canvas") {
+      pCtx.fillStyle = "rgba(240, 235, 222, 0.28)";
+      pCtx.fillRect(0, 0, 160, 160);
+      pCtx.strokeStyle = "rgba(70, 55, 40, 0.1)";
+      pCtx.lineWidth = 1;
+      for (let x = 0; x < 160; x += 4) {
+        pCtx.beginPath(); pCtx.moveTo(x, 0); pCtx.lineTo(x, 160); pCtx.stroke();
+      }
+      for (let y = 0; y < 160; y += 4) {
+        pCtx.beginPath(); pCtx.moveTo(0, y); pCtx.lineTo(160, y); pCtx.stroke();
+      }
+    } else if (this.paperTexture === "toned_kraft") {
+      pCtx.fillStyle = "rgba(195, 168, 134, 0.38)";
+      pCtx.fillRect(0, 0, 160, 160);
+      pCtx.fillStyle = "rgba(80, 55, 30, 0.08)";
+      for (let i = 0; i < 220; i++) {
+        pCtx.fillRect(Math.random() * 160, Math.random() * 160, 1.2, 1.2);
+      }
+    }
+
+    try {
+      this.paperPattern = this.viewportCtx.createPattern(patternCanvas, "repeat");
+    } catch(e) {
+      this.paperPattern = null;
+    }
+  }
+
+  setPaperTexture(textureType) {
+    this.paperTexture = textureType;
+    this.initPaperTexture();
+    this.requestRender();
+  }
+
+  setGridGuide(gridType) {
+    this.gridGuide = gridType;
     this.requestRender();
   }
 
@@ -311,9 +387,12 @@ export class CanvasEngine {
       this.shiftStart = { ...pt };
     }
 
-    if (this.activeTool === "brush") {
+    if (this.activeTool === "brush" || this.activeTool === "eraser") {
+      if (this.activeTool === "eraser") {
+        this.brushEngine.setBrushType("eraser");
+      }
       this.currentStrokeLog = {
-        tool: "brush",
+        tool: this.activeTool,
         layerIdx: this.layerManager.activeLayerIndex,
         brushType: this.brushEngine.brushType,
         size: this.brushEngine.size,
@@ -346,7 +425,7 @@ export class CanvasEngine {
       this.sampleColorAt(pt.x, pt.y);
     }
 
-    if (this.brushEngine.isDrawing && this.activeTool === "brush") {
+    if (this.brushEngine.isDrawing && (this.activeTool === "brush" || this.activeTool === "eraser")) {
       const activeLayer = this.layerManager.getActiveLayer();
       if (activeLayer && !activeLayer.locked) {
         if (this.currentStrokeLog) {
@@ -401,9 +480,31 @@ export class CanvasEngine {
     }
   }
 
+  setActiveTool(tool) {
+    this.activeTool = tool;
+    if (tool === "eraser") {
+      this.brushEngine.setBrushType("eraser");
+    } else if (tool === "brush" && this.brushEngine.brushType === "eraser") {
+      this.brushEngine.setBrushType("technical_pen");
+    }
+    if (this.onToolChange) {
+      this.onToolChange(this.activeTool, this.brushEngine.brushType);
+    }
+    this.requestRender();
+  }
+
   executeFloodFill(x, y) {
-    const activeLayer = this.layerManager.getActiveLayer();
-    if (!activeLayer || activeLayer.locked) return;
+    let activeLayer = this.layerManager.getActiveLayer();
+    if (!activeLayer || activeLayer.locked || !activeLayer.visible || activeLayer.isBackground) {
+      // Find the first unlocked non-background drawing layer
+      const validIdx = this.layerManager.layers.findIndex(l => !l.locked && l.visible && !l.isBackground);
+      if (validIdx !== -1) {
+        this.layerManager.setActiveLayer(validIdx);
+        activeLayer = this.layerManager.getActiveLayer();
+      } else {
+        return;
+      }
+    }
 
     this.layerManager.renderComposite(this.compositeCtx, false);
     const sampleCtx = this.sampleAllLayersForFill ? this.compositeCtx : activeLayer.ctx;
@@ -414,8 +515,9 @@ export class CanvasEngine {
       x,
       y,
       this.colorStudio.currentColor,
-      28,
-      1
+      this.bucketTolerance,
+      this.bucketExpansion,
+      this.bucketGapClosure
     );
 
     if (filled) {
@@ -423,7 +525,9 @@ export class CanvasEngine {
         tool: "bucket",
         layerIdx: this.layerManager.activeLayerIndex,
         x, y,
-        color: this.colorStudio.currentColor
+        color: this.colorStudio.currentColor,
+        tolerance: this.bucketTolerance,
+        expansion: this.bucketExpansion
       });
 
       if (this.audio) this.audio.playBucketFill();
@@ -588,6 +692,15 @@ export class CanvasEngine {
       ctx.restore();
     }
 
+    // 1b. Physical Paper Tooth & Texture Overlay
+    if (this.paperPattern) {
+      ctx.save();
+      ctx.fillStyle = this.paperPattern;
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillRect(0, 0, this.artWidth, this.artHeight);
+      ctx.restore();
+    }
+
     // 2. Reference Trace Overlay
     if (this.traceEngine.referenceLoaded && this.traceEngine.visible) {
       this.traceEngine.render(ctx);
@@ -637,6 +750,28 @@ export class CanvasEngine {
         ctx.moveTo(0, cy);
         ctx.lineTo(this.artWidth, cy);
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 5b. Academic Proportional Grid Guides
+    if (this.gridGuide && this.gridGuide !== "none") {
+      ctx.save();
+      ctx.strokeStyle = "rgba(180, 130, 80, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      if (this.gridGuide === "rule_of_thirds" || this.gridGuide === "academic_3x3") {
+        for (let i = 1; i <= 2; i++) {
+          const gx = (this.artWidth / 3) * i;
+          const gy = (this.artHeight / 3) * i;
+          ctx.beginPath();
+          ctx.moveTo(gx, 0); ctx.lineTo(gx, this.artHeight);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, gy); ctx.lineTo(this.artWidth, gy);
+          ctx.stroke();
+        }
       }
       ctx.restore();
     }
@@ -741,4 +876,98 @@ export class CanvasEngine {
 
     return canvas.toDataURL("image/png");
   }
+
+  /**
+   * Export full ITIA Project document (.itia JSON)
+   */
+  exportProjectJSON(meta = {}) {
+    const projectData = {
+      format: "ITIA_PROJECT",
+      version: "2.0",
+      createdAt: new Date().toISOString(),
+      width: this.artWidth,
+      height: this.artHeight,
+      paperTexture: this.paperTexture,
+      meta: {
+        title: meta.title || "Untitled Masterpiece",
+        genre: meta.genre || "Digital Art",
+        ...meta
+      },
+      layers: this.layerManager.layers.map(l => ({
+        id: l.id,
+        name: l.name,
+        visible: l.visible,
+        locked: l.locked,
+        opacity: l.opacity,
+        blendMode: l.blendMode,
+        isBackground: l.isBackground,
+        dataUrl: l.canvas.toDataURL("image/png")
+      })),
+      activeLayerIndex: this.layerManager.activeLayerIndex,
+      timelapseLog: this.timelapseLog.slice(0, 500)
+    };
+
+    return JSON.stringify(projectData);
+  }
+
+  /**
+   * Restore full ITIA Project document from parsed JSON
+   */
+  async importProjectJSON(projectData) {
+    if (!projectData || projectData.format !== "ITIA_PROJECT") {
+      throw new Error("Invalid ITIA project file format.");
+    }
+
+    if (projectData.width && projectData.height) {
+      this.resizeCanvas(projectData.width, projectData.height);
+    }
+
+    if (projectData.paperTexture) {
+      this.setPaperTexture(projectData.paperTexture);
+    }
+
+    if (Array.isArray(projectData.layers)) {
+      this.layerManager.layers = [];
+      for (const saved of projectData.layers) {
+        const layer = this.layerManager.addLayer(saved.name);
+        layer.visible = saved.visible;
+        layer.locked = saved.locked;
+        layer.opacity = saved.opacity;
+        layer.blendMode = saved.blendMode || "source-over";
+        layer.isBackground = saved.isBackground || false;
+
+        if (saved.dataUrl) {
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              layer.clear();
+              layer.ctx.drawImage(img, 0, 0);
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = saved.dataUrl;
+          });
+        }
+      }
+
+      this.layerManager.activeLayerIndex = Math.min(
+        projectData.activeLayerIndex || 0,
+        this.layerManager.layers.length - 1
+      );
+    }
+
+    if (Array.isArray(projectData.timelapseLog)) {
+      this.timelapseLog = projectData.timelapseLog;
+    }
+
+    if (this.layerManager.onLayersChange) {
+      this.layerManager.onLayersChange();
+    }
+
+    this.saveState();
+    this.fitToScreen();
+    this.requestRender();
+    return true;
+  }
 }
+

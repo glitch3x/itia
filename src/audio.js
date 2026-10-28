@@ -226,6 +226,103 @@ class StudioAudio {
     osc.start(now);
     osc.stop(now + 0.055);
   }
+
+  // Cinematic Motion Graphic Ambient Chord
+  playIntroChord() {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    // Ambient frequencies: D2 (73.4), A2 (110), D3 (146.8), F#3 (185.0), A3 (220.0), E4 (329.6)
+    const freqs = [73.4, 110.0, 146.8, 185.0, 220.0, 329.6];
+
+    freqs.forEach((f, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = idx === 0 ? 'sine' : (idx % 2 === 0 ? 'triangle' : 'sine');
+      osc.frequency.setValueAtTime(f, now);
+      // Gentle pitch drift for analog warmth
+      osc.frequency.linearRampToValueAtTime(f * 1.002, now + 2.2);
+
+      const peakGain = 0.04 / (idx + 1);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(peakGain, now + 0.6 + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 2.7);
+    });
+  }
+
+  // Soft crystalline chime for each letter (I, T, I, A)
+  playLetterChime(index = 0) {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    // Harmonic notes: D5 (587.33), F#5 (739.99), A5 (880.0), D6 (1174.66)
+    const pitches = [587.33, 739.99, 880.0, 1174.66];
+    const pitch = pitches[index % pitches.length] || 880;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.05, now + 0.15);
+
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.38);
+  }
+
+  // Uplifting canvas reveal chime & flourish
+  playCanvasEnter() {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    
+    // Low whoosh
+    const oscLow = this.ctx.createOscillator();
+    const gainLow = this.ctx.createGain();
+    oscLow.type = 'sine';
+    oscLow.frequency.setValueAtTime(140, now);
+    oscLow.frequency.exponentialRampToValueAtTime(440, now + 0.18);
+    gainLow.gain.setValueAtTime(0.07, now);
+    gainLow.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    oscLow.connect(gainLow);
+    gainLow.connect(this.ctx.destination);
+    oscLow.start(now);
+    oscLow.stop(now + 0.24);
+
+    // High crystalline bell shimmer
+    [880, 1174, 1480].forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.05);
+      gain.gain.setValueAtTime(0.05, now + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3 + i * 0.05);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + i * 0.05);
+      osc.stop(now + 0.35 + i * 0.05);
+    });
+  }
 }
 
 export const studioAudio = new StudioAudio();
+

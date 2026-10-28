@@ -70,25 +70,25 @@ export class LayerManager {
   initDefaultLayers() {
     this.layers = [];
     // 0: Background
-    const bg = new Layer(this.nextLayerId++, "Background", this.width, this.height, {
+    const bg = new Layer(this.nextLayerId++, "Background Paper", this.width, this.height, {
       isBackground: true,
-      initialFill: "#ffffff"
+      initialFill: "#f7f4ed"
     });
-    // 1: Base Colors
-    const col = new Layer(this.nextLayerId++, "Colors & Fill", this.width, this.height, {
+    // 1: Base Pigment
+    const col = new Layer(this.nextLayerId++, "Pigment & Color", this.width, this.height, {
       blendMode: "source-over"
     });
-    // 2: Lineart & Inking
-    const line = new Layer(this.nextLayerId++, "Lineart & Inking", this.width, this.height, {
+    // 2: Contours & Ink
+    const line = new Layer(this.nextLayerId++, "Contours & Inking", this.width, this.height, {
       blendMode: "source-over"
     });
-    // 3: Highlights & Glow
-    const glow = new Layer(this.nextLayerId++, "Highlights & Glow", this.width, this.height, {
+    // 3: Glaze & Highlights
+    const glow = new Layer(this.nextLayerId++, "Glaze & Highlights", this.width, this.height, {
       blendMode: "source-over"
     });
 
     this.layers = [bg, col, line, glow];
-    this.activeLayerIndex = 2; // Lineart by default
+    this.activeLayerIndex = 2; // Contours & Inking by default
   }
 
   resizeAll(width, height) {

@@ -6,12 +6,13 @@
   <title>ITIA STUDIO // Trace & Paint Digital Art Canvas</title>
   <meta name="description" content="An avant-garde digital art studio to trace, ink lineart, and color stunning masterpieces with pro brushes, smart flood fill, multi-layer canvas, and light-table trace filters. Powered by ITIA.">
   
-  <!-- Modern Google Fonts -->
+  <!-- Modern & Classical Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23050508'/><text x='50' y='65' font-family='serif' font-size='48' font-weight='bold' fill='%2300f0ff' text-anchor='middle'>I</text></svg>">
 </head>
 <body class="studio-dark-theme">
 
@@ -26,31 +27,56 @@
         </div>
       </div>
 
-      <div class="active-art-pill" id="btn-open-gallery" title="Click to choose a different artwork">
-        <span class="pill-sparkle">✦</span>
+      <div class="active-art-pill" id="btn-open-gallery" title="Click to choose a different ITIA artwork">
+        <span class="pill-sparkle">✨</span>
         <span class="pill-title" id="active-artwork-title">Iridescent Hydrangea</span>
         <span class="pill-genre" id="active-artwork-genre">Holographic Anime</span>
         <span class="pill-chevron">▾</span>
       </div>
+
+      <button class="topbar-canvas-btn" id="btn-header-new-canvas" title="Choose Canvas & Project Launcher">
+        <span class="btn-sparkle">✨</span>
+        <span class="btn-text">New Canvas</span>
+      </button>
     </div>
 
     <!-- Center Navigation / Quick Actions -->
     <div class="topbar-center">
-      <button class="topbar-btn" id="btn-header-gallery" title="Browse Masterpieces Gallery">
-        <span class="btn-icon">🖼️</span>
-        <span class="btn-text">Gallery</span>
+      <button class="topbar-btn" id="btn-header-gallery" title="Browse ITIA Art Gallery">
+        <span class="btn-icon">🏛️</span>
+        <span class="btn-text">ITIA Gallery</span>
       </button>
 
-      <button class="topbar-btn" id="btn-header-upload" title="Upload your own photo or art to trace">
-        <span class="btn-icon">📤</span>
+      <button class="topbar-btn" id="btn-header-upload" title="Upload your own photo or art to study and trace">
+        <span class="btn-icon">📁</span>
         <span class="btn-text">Upload Custom</span>
       </button>
       <input type="file" id="custom-upload-input" accept="image/*" style="display: none;">
 
       <div class="topbar-divider"></div>
 
+      <!-- Paper Substrate Texture Selector -->
+      <div class="symmetry-select-wrap" title="Physical Canvas & Paper Substrate">
+        <span class="symmetry-icon">📜</span>
+        <select id="paper-texture-select" class="topbar-select">
+          <option value="cold_press" selected>Cold-Press Watercolor</option>
+          <option value="linen_canvas">Fine Linen Canvas</option>
+          <option value="toned_kraft">Toned Kraft Paper</option>
+          <option value="none">Smooth Bristol (Flat)</option>
+        </select>
+      </div>
+
+      <!-- Academic Proportional Grid -->
+      <div class="symmetry-select-wrap" title="Academic Proportion & Perspective Grid">
+        <span class="symmetry-icon">📐</span>
+        <select id="grid-guide-select" class="topbar-select">
+          <option value="none">Grid: Off</option>
+          <option value="academic_3x3">Rule of Thirds (3×3)</option>
+        </select>
+      </div>
+
       <!-- Symmetry Mode Dropdown -->
-      <div class="symmetry-select-wrap" title="Mirror drawing in real-time across canvas axes">
+      <div class="symmetry-select-wrap" title="Mirror drawing across canvas axes">
         <span class="symmetry-icon">🪞</span>
         <select id="symmetry-select" class="topbar-select">
           <option value="none">Symmetry: Off</option>
@@ -61,7 +87,7 @@
       </div>
 
       <!-- Quick Wipe Comparison Toggle -->
-      <label class="wipe-toggle-label" title="Compare original artwork with your drawing using a sliding curtain">
+      <label class="wipe-toggle-label" title="Compare original master study with your drawing using a sliding curtain">
         <input type="checkbox" id="wipe-toggle-check">
         <span class="toggle-slider"></span>
         <span class="toggle-text">Split Compare</span>
@@ -121,8 +147,13 @@
         <span>?</span>
       </button>
 
-      <!-- Export / Save Button -->
-      <button class="primary-export-btn" id="btn-header-export" title="Export High-Res Artwork">
+      <!-- Export / Save Button & Quick Download -->
+      <button class="topbar-btn quick-dl-btn" id="btn-quick-download" title="Quick Download Artwork (Ctrl+S)">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-text">Quick Download</span>
+      </button>
+
+      <button class="primary-export-btn" id="btn-header-export" title="Export High-Res Artwork & Project">
         <span class="export-icon">💾</span>
         <span>Save & Export</span>
       </button>
@@ -140,7 +171,7 @@
           <span class="tool-icon">🖌️</span>
           <span class="tool-hotkey">B</span>
         </button>
-        <button class="tool-btn" data-tool="bucket" title="Smart Flood Fill / Paint Bucket (G)">
+        <button class="tool-btn" data-tool="bucket" title="Smart Flood Fill / Colour Pouring (G)">
           <span class="tool-icon">🪣</span>
           <span class="tool-hotkey">G</span>
         </button>
@@ -148,9 +179,13 @@
           <span class="tool-icon">💧</span>
           <span class="tool-hotkey">I</span>
         </button>
-        <button class="tool-btn" data-tool="line" title="Straight Line Guide (Hold Shift)">
+        <button class="tool-btn" data-tool="line" title="Straight Line Guide (Hold Shift / L)">
           <span class="tool-icon">📏</span>
           <span class="tool-hotkey">L</span>
+        </button>
+        <button class="tool-btn" data-tool="eraser" title="Precision Eraser (E)">
+          <span class="tool-icon">🧹</span>
+          <span class="tool-hotkey">E</span>
         </button>
         <button class="tool-btn" data-tool="hand" title="Pan / Hand Tool (Spacebar + Drag)">
           <span class="tool-icon">✋</span>
@@ -160,44 +195,83 @@
 
       <div class="toolbar-separator"></div>
 
-      <!-- Brush Engine Types -->
+      <!-- Atelier Natural Media Brushes -->
       <div class="brush-engines-group" id="brush-engines-submenu">
-        <span class="group-label">BRUSHES</span>
-        <button class="brush-type-btn active" data-brush="studio_pen" title="Studio Fine Liner: Clean vector-sharp lines for precise tracing">
-          <span class="brush-dot studio-pen"></span>
-          <span class="brush-name">Fine Liner</span>
+        <span class="group-label">ATELIER MEDIA</span>
+        <button class="brush-type-btn active" data-brush="charcoal" title="Vine & Willow Charcoal: Velvety, powdery matte finish with paper tooth">
+          <span class="brush-dot charcoal"></span>
+          <span class="brush-name">Charcoal</span>
         </button>
-        <button class="brush-type-btn" data-brush="pencil" title="Sketch Pencil: Analog graphite texture for initial lay-in">
+        <button class="brush-type-btn" data-brush="pencil" title="Graphite Sketch Pencil: Multi-grade 2H-6B with tilt shading">
           <span class="brush-dot pencil"></span>
           <span class="brush-name">Pencil</span>
         </button>
-        <button class="brush-type-btn" data-brush="marker" title="Copic Marker: Semi-transparent layered tone">
+        <button class="brush-type-btn" data-brush="technical_pen" title="Technical Inking Pen: Razor-sharp fluid contours for ink work">
+          <span class="brush-dot technical-pen"></span>
+          <span class="brush-name">Tech Pen</span>
+        </button>
+        <button class="brush-type-btn" data-brush="oil_brush" title="Master Oil & Gouache: Opaque body with bristle brushwork">
+          <span class="brush-dot oil-brush"></span>
+          <span class="brush-name">Oil Paint</span>
+        </button>
+        <button class="brush-type-btn" data-brush="watercolor" title="Watercolor Wash: Translucent layered pigment with wet edge pooling">
+          <span class="brush-dot watercolor"></span>
+          <span class="brush-name">Watercolor</span>
+        </button>
+        <button class="brush-type-btn" data-brush="marker" title="Alcohol Chisel Marker: Layered tonal shading">
           <span class="brush-dot marker"></span>
           <span class="brush-name">Marker</span>
         </button>
-        <button class="brush-type-btn" data-brush="airbrush" title="Soft Airbrush: Buttery smooth shading & gradients">
+        <button class="brush-type-btn" data-brush="airbrush" title="Fine Mist Airbrush: Buttery smooth chiaroscuro transitions">
           <span class="brush-dot airbrush"></span>
           <span class="brush-name">Airbrush</span>
         </button>
-        <button class="brush-type-btn" data-brush="neon_glow" title="Neon Glow: Luminous bloom brush for tears, eyes & glowing blooms">
-          <span class="brush-dot neon-glow"></span>
-          <span class="brush-name">Neon Glow</span>
+        <button class="brush-type-btn" data-brush="smudge" title="Tortillon / Blending Stump: Softly blend and soften charcoal and pigment">
+          <span class="brush-dot smudge"></span>
+          <span class="brush-name">Tortillon</span>
         </button>
-        <button class="brush-type-btn" data-brush="sparkle" title="Sparkle Dust: Glowing 4-point anime star flares">
-          <span class="brush-dot sparkle"></span>
-          <span class="brush-name">Sparkle</span>
-        </button>
-        <button class="brush-type-btn" data-brush="sakura_petals" title="Sakura Petals: Scattered cherry blossoms">
-          <span class="brush-dot petals"></span>
-          <span class="brush-name">Petals</span>
-        </button>
-        <button class="brush-type-btn" data-brush="halftone" title="Manga Halftone: Screentone dot matrix">
-          <span class="brush-dot halftone"></span>
-          <span class="brush-name">Halftone</span>
-        </button>
-        <button class="brush-type-btn" data-brush="eraser" title="Precision Eraser (E)">
+        <button class="brush-type-btn" data-brush="eraser" title="Kneaded Studio Eraser (E): Cleanly lift graphite and pigment">
           <span class="brush-dot eraser"></span>
           <span class="brush-name">Eraser</span>
+        </button>
+      </div>
+
+      <!-- Pencil Studio Widget (Grades & Shading/Tilt) -->
+      <div class="pencil-studio-widget" id="pencil-studio-widget" style="display: none;">
+        <span class="widget-label">GRAPHITE GRADE</span>
+        <div class="pencil-grades-grid">
+          <button class="pencil-grade-btn" data-grade="2H" title="2H: Hard, silver-gray precision lines">2H</button>
+          <button class="pencil-grade-btn" data-grade="HB" title="HB: Balanced standard sketching">HB</button>
+          <button class="pencil-grade-btn active" data-grade="2B" title="2B: Soft, rich expressive graphite">2B</button>
+          <button class="pencil-grade-btn" data-grade="4B" title="4B: Dark, velvety shading depth">4B</button>
+          <button class="pencil-grade-btn" data-grade="6B" title="6B: Deep matte chiaroscuro darks">6B</button>
+        </div>
+        <div class="pencil-mode-toggle">
+          <button class="pencil-mode-btn active" data-pmode="tip" title="Pointed tip for contours & cross-hatching">✏️ Tip</button>
+          <button class="pencil-mode-btn" data-pmode="shade" title="Flat broad lead tilt for soft continuous shading">📐 Shade</button>
+        </div>
+      </div>
+
+      <!-- Colour Pouring Widget (Flood Fill) -->
+      <div class="bucket-studio-widget" id="bucket-studio-widget" style="display: none;">
+        <span class="widget-label">COLOUR POURING</span>
+        <div class="quick-slider-box full">
+          <div class="slider-header">
+            <span>Tolerance</span>
+            <span class="slider-val" id="bucket-tol-val">35%</span>
+          </div>
+          <input type="range" id="bucket-tol-slider" min="5" max="85" value="35" class="studio-slider">
+        </div>
+        <div class="quick-slider-box full">
+          <div class="slider-header">
+            <span>Expansion</span>
+            <span class="slider-val" id="bucket-exp-val">1px</span>
+          </div>
+          <input type="range" id="bucket-exp-slider" min="0" max="4" value="1" class="studio-slider">
+        </div>
+        <button class="bucket-gap-toggle-btn active" id="btn-toggle-gap-closure" title="Prevent paint from leaking through 1-2px breaks in lineart">
+          <span class="gap-icon">🛡️</span>
+          <span class="gap-text">Gap Protect: ON</span>
         </button>
       </div>
 
@@ -210,6 +284,16 @@
           <span class="slider-val" id="brush-size-val">6px</span>
         </div>
         <input type="range" id="brush-size-slider" min="1" max="100" value="6" class="studio-slider">
+      </div>
+
+      <!-- Quick Size Pills Grid -->
+      <div class="quick-size-presets-grid" id="quick-size-presets">
+        <button class="size-preset-pill" data-size="2" title="2px Hairline & Precision Detail">2</button>
+        <button class="size-preset-pill" data-size="4" title="4px Fine Line">4</button>
+        <button class="size-preset-pill active" data-size="6" title="6px Standard Sketch">6</button>
+        <button class="size-preset-pill" data-size="12" title="12px Soft Inking">12</button>
+        <button class="size-preset-pill" data-size="24" title="24px Broad Shading">24</button>
+        <button class="size-preset-pill" data-size="48" title="48px Wash & Tone">48</button>
       </div>
 
       <div class="quick-slider-box">
@@ -312,7 +396,7 @@
           </div>
 
           <div class="ref-preview-card">
-            <img src="assets/art_iridescent_hydrangea.jpg" alt="Reference Artwork" id="reference-dock-thumb" class="ref-thumb-img">
+            <img src="assets/art_iridescent_hydrangea.jpg" alt="ITIA Reference Artwork" id="reference-dock-thumb" class="ref-thumb-img">
             <div class="ref-card-overlay">
               <button class="ref-swap-btn" id="btn-swap-artwork" onclick="document.getElementById('btn-open-gallery').click();">
                 Browse Gallery ▾
@@ -331,7 +415,7 @@
         <!-- Light Table Opacity -->
         <div class="panel-section">
           <div class="section-title-row">
-            <span class="section-title">Trace Opacity (Light Table)</span>
+            <span class="section-title">Light Table Luminance</span>
             <span class="val-badge" id="trace-opacity-val">50%</span>
           </div>
           <input type="range" id="trace-opacity-slider" min="0" max="100" value="50" class="studio-slider full">
@@ -346,7 +430,7 @@
 
         <!-- Trace Filter Modes -->
         <div class="panel-section">
-          <span class="section-title">Trace Filter Mode</span>
+          <span class="section-title">Transfer & Trace Mode</span>
           <div class="trace-modes-grid">
             <button class="trace-mode-btn active" data-mode="normal" title="Normal full-color artwork">
               <span class="mode-icon">🎨</span>
@@ -358,9 +442,9 @@
             </button>
             <button class="trace-mode-btn" data-mode="lineart" title="Real-time edge detection line outlines">
               <span class="mode-icon">✒️</span>
-              <span class="mode-name">Lineart</span>
+              <span class="mode-name">Contours</span>
             </button>
-            <button class="trace-mode-btn" data-mode="high_contrast" title="High contrast silhouette">
+            <button class="trace-mode-btn" data-mode="high_contrast" title="High contrast chiaroscuro">
               <span class="mode-icon">◐</span>
               <span class="mode-name">Contrast</span>
             </button>
@@ -371,15 +455,15 @@
           </div>
         </div>
 
-        <!-- Instant Coloring Sheet Conversion -->
+        <!-- Instant Contour Sheet Conversion -->
         <div class="panel-section highlight-box">
           <div class="highlight-box-header">
-            <span class="highlight-badge">ONE-CLICK MAGIC</span>
-            <h4 class="highlight-title">Generate Coloring Book</h4>
+            <span class="highlight-badge">CONTOUR EXTRACTION</span>
+            <h4 class="highlight-title">Extract Atelier Inking Sheet</h4>
           </div>
-          <p class="highlight-desc">Extracts clean lineart from the artwork directly onto your Lineart Layer so you can immediately color it in with the Paint Bucket!</p>
+          <p class="highlight-desc">Extracts clean contour outlines directly onto your Inking Layer so you can immediately begin inking, watercolor washes, or oil glazing!</p>
           <button class="action-glow-btn" id="btn-bake-outlines">
-            <span>✨ Bake Lines & Start Coloring</span>
+            <span>✒️ Transfer Contours & Start Inking</span>
           </button>
         </div>
       </div>
@@ -389,17 +473,17 @@
         <!-- Color Input & Native Spectrum -->
         <div class="panel-section">
           <div class="section-title-row">
-            <span class="section-title">Selected Color</span>
+            <span class="section-title">Selected Pigment</span>
             <button class="pill-action-btn" id="btn-quick-eyedropper">
               <span>💧 Pick from Canvas</span>
             </button>
           </div>
 
           <div class="color-picker-row">
-            <input type="color" id="native-color-picker" value="#ff1244" class="studio-color-input" title="Open Color Spectrum">
+            <input type="color" id="native-color-picker" value="#3b3d45" class="studio-color-input" title="Open Color Spectrum">
             <div class="hex-input-wrapper">
               <span class="hex-prefix">#</span>
-              <input type="text" id="hex-color-input" value="#FF1244" maxlength="7" class="studio-text-input">
+              <input type="text" id="hex-color-input" value="#3B3D45" maxlength="7" class="studio-text-input">
             </div>
           </div>
         </div>
@@ -407,8 +491,8 @@
         <!-- Curated Palette (Artwork-Tailored) -->
         <div class="panel-section">
           <div class="section-title-row">
-            <span class="section-title">Masterpiece Palette</span>
-            <span class="sub-label">Tailored Swatches</span>
+            <span class="section-title">Master Atelier Palette</span>
+            <span class="sub-label">Authentic Pigments</span>
           </div>
           <div class="swatches-grid" id="curated-palette-container"></div>
         </div>
@@ -416,15 +500,15 @@
         <!-- Extracted Colors Strip -->
         <div class="panel-section">
           <div class="section-title-row">
-            <span class="section-title">Sampled Reference Colors</span>
-            <span class="sub-label">AI Quantized</span>
+            <span class="section-title">Extracted Pigments</span>
+            <span class="sub-label">Harmonic Palette</span>
           </div>
           <div class="swatches-grid" id="extracted-palette-container"></div>
         </div>
 
         <!-- Recent Swatches -->
         <div class="panel-section">
-          <span class="section-title">Recent Colors</span>
+          <span class="section-title">Recent Pigments</span>
           <div class="swatches-strip" id="recent-colors-container"></div>
         </div>
       </div>
@@ -455,9 +539,9 @@
         <div class="panel-section">
           <span class="section-title">Canvas Backdrop</span>
           <div class="bg-color-presets">
-            <button class="bg-color-btn active" data-color="#ffffff">White Paper</button>
-            <button class="bg-color-btn" data-color="#181a20">Dark Slate</button>
+            <button class="bg-color-btn active" data-color="#f7f4ed">Rag Paper</button>
             <button class="bg-color-btn" data-color="#f5efe6">Warm Cream</button>
+            <button class="bg-color-btn" data-color="#181a20">Dark Slate</button>
             <button class="bg-color-btn" data-color="transparent">Transparent</button>
           </div>
         </div>
@@ -565,6 +649,24 @@
               </div>
             </button>
 
+            <!-- ITIA Project Document Export / Import -->
+            <button class="export-action-btn project-btn" id="btn-download-project">
+              <span class="btn-icon">📦</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Save ITIA Project File (.itia)</span>
+                <span class="btn-sub-text">Complete multi-layer document with stroke history</span>
+              </div>
+            </button>
+
+            <button class="export-action-btn tertiary" id="btn-open-project-trigger" onclick="document.getElementById('project-file-input').click();">
+              <span class="btn-icon">📂</span>
+              <div class="btn-text-block">
+                <span class="btn-main-text">Open / Resume ITIA Project</span>
+                <span class="btn-sub-text">Restore drawing layers from saved .itia file</span>
+              </div>
+            </button>
+            <input type="file" id="project-file-input" accept=".itia,.json" style="display: none;">
+
             <button class="export-action-btn tertiary" id="btn-copy-clipboard">
               <span class="btn-icon">📋</span>
               <div class="btn-text-block">
@@ -587,9 +689,11 @@
       </div>
       <div class="shortcuts-grid">
         <div class="shortcut-row"><kbd>B</kbd><span>Brush / Inker Tool</span></div>
+        <div class="shortcut-row"><kbd>P</kbd><span>Graphite Pencil (2H-6B & Shading)</span></div>
         <div class="shortcut-row"><kbd>E</kbd><span>Precision Eraser</span></div>
-        <div class="shortcut-row"><kbd>G</kbd><span>Smart Paint Bucket (Flood Fill)</span></div>
+        <div class="shortcut-row"><kbd>G</kbd><span>Smart Flood Fill (Colour Pouring)</span></div>
         <div class="shortcut-row"><kbd>I</kbd><span>Color Eyedropper</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Straight Line Guide</span></div>
         <div class="shortcut-row"><kbd>Space + Drag</kbd><span>Pan / Move Canvas</span></div>
         <div class="shortcut-row"><kbd>Mouse Wheel</kbd><span>Zoom In / Out</span></div>
         <div class="shortcut-row"><kbd>Shift + Drag</kbd><span>Draw Straight Line Guide</span></div>
@@ -598,6 +702,7 @@
         <div class="shortcut-row"><kbd>F</kbd><span>Fit Canvas to Screen</span></div>
         <div class="shortcut-row"><kbd>H</kbd><span>Flip Canvas Horizontally</span></div>
         <div class="shortcut-row"><kbd>[</kbd> / <kbd>]</kbd><span>Decrease / Increase Brush Size</span></div>
+        <div class="shortcut-row"><kbd>Ctrl + S</kbd><span>Quick Download Artwork</span></div>
         <div class="shortcut-row"><kbd>Ctrl + Z</kbd><span>Undo</span></div>
         <div class="shortcut-row"><kbd>Ctrl + Y</kbd><span>Redo</span></div>
       </div>
@@ -606,6 +711,280 @@
 
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div class="toast-container" id="toast-container"></div>
+
+  <!-- =====================================================================
+       FULL-SCREEN MOTION GRAPHIC, WELCOME & CHOOSE CANVAS OVERLAY
+       ===================================================================== -->
+  <div class="itia-intro-overlay stage-motion" id="itia-intro-overlay">
+    <!-- Particle Canvas for Atmospheric Cosmic Dust -->
+    <canvas id="intro-particles-canvas" class="intro-particles-canvas"></canvas>
+
+    <!-- Top Utility Controls -->
+    <div class="intro-top-controls">
+      <button class="intro-ctrl-btn" id="btn-intro-sound-toggle" title="Toggle Tactile Audio">
+        <span class="icon-sound-on">🔊 Audio Active</span>
+        <span class="icon-sound-off">🔇 Audio Muted</span>
+      </button>
+      <button class="intro-ctrl-btn skip-btn" id="btn-skip-intro" title="Skip Intro & Choose Canvas">
+        <span>Skip Intro</span>
+        <kbd>Esc</kbd>
+      </button>
+    </div>
+
+    <!-- ================= STAGE 1: MOTION GRAPHIC VIEW ================= -->
+    <div class="intro-stage-view" id="intro-motion-view">
+      <div class="motion-content-center">
+        <!-- Exact Vertical Typography from User Reference Image -->
+        <div class="intro-logo-vertical" id="intro-vertical-logo">
+          <div class="intro-letter" data-char="I">I</div>
+          <div class="intro-letter" data-char="T">T</div>
+          <div class="intro-letter" data-char="I">I</div>
+          <div class="intro-letter" data-char="A">A</div>
+          <div class="intro-light-sweep"></div>
+        </div>
+
+        <!-- Typography Expansion Reveal -->
+        <div class="intro-tagline-container">
+          <div class="intro-tagline-rule"></div>
+          <h2 class="intro-tagline-text">I THINK IT'S ART</h2>
+          <span class="intro-tagline-sub">DIGITAL ATELIER & STUDIO</span>
+        </div>
+
+        <div class="intro-click-prompt">
+          <span class="prompt-pulse"></span>
+          <span>Click anywhere or press Space to proceed · Skip (Esc)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= STAGE 2: WELCOME & MANIFESTO VIEW ================= -->
+    <div class="intro-stage-view" id="intro-welcome-view">
+      <div class="welcome-card-glass">
+        <div class="welcome-header">
+          <div class="welcome-emblem">
+            <span class="emblem-letters">ITIA</span>
+            <span class="emblem-sub">STUDIO</span>
+          </div>
+          <h1 class="welcome-title">Where ITIA Art Vision Meets Digital Creation</h1>
+          <p class="welcome-manifesto">
+            An avant-garde digital art suite engineered for tracing iconic ITIA artworks, inking fluid contours with smart stabilization, painting rich vibrant pigments, or commanding a bespoke blank canvas.
+          </p>
+        </div>
+
+        <!-- Three Pillars Feature Showcase -->
+        <div class="welcome-pillars-grid">
+          <div class="pillar-card">
+            <div class="pillar-icon">✨</div>
+            <h3 class="pillar-title">Curated ITIA Artworks</h3>
+            <p class="pillar-desc">Explore signature ITIA creations (Iridescent Hydrangea, Noir Blinds, Peony Noir, Neon Reverie, Sakura Twilight, and more) with authentic pigment palettes.</p>
+          </div>
+          <div class="pillar-card">
+            <div class="pillar-icon">✒️</div>
+            <h3 class="pillar-title">Pro Light Table & Inking</h3>
+            <p class="pillar-desc">Real-time edge detection contour sheets, cyanotype blueprint transfer, split-curtain comparisons, and jitter-free stabilization.</p>
+          </div>
+          <div class="pillar-card">
+            <div class="pillar-icon">🎨</div>
+            <h3 class="pillar-title">Atelier Media & Layers</h3>
+            <p class="pillar-desc">Tech inking pen, charcoal, oil paint, watercolor washes, and smart multi-layer paint buckets that sample boundaries without halo bleeding.</p>
+          </div>
+        </div>
+
+        <!-- Welcome Action Footer -->
+        <div class="welcome-action-footer">
+          <button class="welcome-cta-btn primary" id="btn-welcome-choose-canvas">
+            <span>✨ Choose Your Canvas & Start</span>
+            <span class="btn-arrow">→</span>
+          </button>
+          <button class="welcome-cta-btn secondary" id="btn-welcome-quick-start">
+            <span>⚡ Quick Start (Iridescent Hydrangea)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= STAGE 3: CHOOSE CANVAS VIEW ================= -->
+    <div class="intro-stage-view" id="intro-chooser-view">
+      <div class="chooser-modal-box">
+        
+        <!-- Header -->
+        <div class="chooser-header">
+          <div class="chooser-header-titles">
+            <div class="chooser-badge-row">
+              <span class="chooser-badge">WORKSPACE SETUP</span>
+              <span class="chooser-badge-sub">CHOOSE YOUR STARTING CANVAS</span>
+            </div>
+            <h2 class="chooser-main-title">Canvas & Project Studio</h2>
+            <p class="chooser-sub-title">Select a signature ITIA artwork, design a bespoke blank canvas, or upload your own reference</p>
+          </div>
+          <button class="chooser-close-btn" id="btn-close-chooser-modal" title="Close Chooser">✕</button>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="chooser-tabs-bar">
+          <button class="chooser-tab-btn active" data-target="panel-choose-masterpiece">
+            <span class="tab-icon">✨</span>
+            <span>ITIA Artworks</span>
+          </button>
+          <button class="chooser-tab-btn" data-target="panel-choose-blank">
+            <span class="tab-icon">📄</span>
+            <span>Bespoke Blank Canvas</span>
+          </button>
+          <button class="chooser-tab-btn" data-target="panel-choose-upload">
+            <span class="tab-icon">📁</span>
+            <span>Upload Custom Photo</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: ITIA ARTWORKS -->
+        <div class="chooser-panel active" id="panel-choose-masterpiece">
+          <!-- Filter Categories -->
+          <div class="chooser-filter-bar">
+            <span class="filter-label">Filter:</span>
+            <button class="category-pill active" data-category="all">All ITIA Art</button>
+            <button class="category-pill" data-category="anime">Holographic & Anime</button>
+            <button class="category-pill" data-category="noir">Cyberpunk & Noir</button>
+            <button class="category-pill" data-category="couture">Haute Couture & Surreal</button>
+          </div>
+
+          <!-- Dynamic Masterpiece Cards Grid -->
+          <div class="chooser-cards-grid" id="chooser-masterpiece-grid"></div>
+        </div>
+
+        <!-- TAB 2: BLANK CANVAS -->
+        <div class="chooser-panel" id="panel-choose-blank">
+          <div class="blank-canvas-builder">
+            <!-- Dimensions Selection -->
+            <div class="builder-section">
+              <span class="builder-section-title">1. Canvas Dimensions & Aspect Ratio</span>
+              <div class="size-presets-grid">
+                <div class="size-preset-card active" data-preset="portrait_3x4" data-w="1000" data-h="1333">
+                  <span class="preset-ratio">3:4</span>
+                  <span class="preset-name">Classical Portrait</span>
+                  <span class="preset-res">1000 × 1333 px</span>
+                </div>
+                <div class="size-preset-card" data-preset="square_1x1" data-w="1200" data-h="1200">
+                  <span class="preset-ratio">1:1</span>
+                  <span class="preset-name">Editorial Square</span>
+                  <span class="preset-res">1200 × 1200 px</span>
+                </div>
+                <div class="size-preset-card" data-preset="story_9x16" data-w="1080" data-h="1920">
+                  <span class="preset-ratio">9:16</span>
+                  <span class="preset-name">Vertical Story / Reel</span>
+                  <span class="preset-res">1080 × 1920 px</span>
+                </div>
+                <div class="size-preset-card" data-preset="widescreen_16x9" data-w="1920" data-h="1080">
+                  <span class="preset-ratio">16:9</span>
+                  <span class="preset-name">Cinematic Landscape</span>
+                  <span class="preset-res">1920 × 1080 px</span>
+                </div>
+              </div>
+
+              <!-- Custom Dimensions Inputs -->
+              <div class="custom-dims-row">
+                <span class="dims-label">Custom Pixel Size:</span>
+                <div class="dim-input-group">
+                  <label for="blank-canvas-width">W</label>
+                  <input type="number" id="blank-canvas-width" value="1000" min="400" max="4000" step="50">
+                  <span>px</span>
+                </div>
+                <span class="dims-times">×</span>
+                <div class="dim-input-group">
+                  <label for="blank-canvas-height">H</label>
+                  <input type="number" id="blank-canvas-height" value="1333" min="400" max="4000" step="50">
+                  <span>px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Paper Substrate -->
+            <div class="builder-section">
+              <span class="builder-section-title">2. Physical Paper & Canvas Substrate</span>
+              <div class="paper-presets-grid">
+                <div class="paper-option-card active" data-paper="cold_press">
+                  <span class="paper-icon">📜</span>
+                  <div class="paper-text">
+                    <span class="paper-title">Cold-Press Watercolor</span>
+                    <span class="paper-desc">Organic tooth and absorbent paper grain</span>
+                  </div>
+                </div>
+                <div class="paper-option-card" data-paper="linen_canvas">
+                  <span class="paper-icon">🎨</span>
+                  <div class="paper-text">
+                    <span class="paper-title">Fine Linen Canvas</span>
+                    <span class="paper-desc">Woven master artist linen weave</span>
+                  </div>
+                </div>
+                <div class="paper-option-card" data-paper="toned_kraft">
+                  <span class="paper-icon">🏷️</span>
+                  <div class="paper-text">
+                    <span class="paper-title">Toned Kraft Paper</span>
+                    <span class="paper-desc">Midtone tan paper for charcoal & chalk</span>
+                  </div>
+                </div>
+                <div class="paper-option-card" data-paper="none">
+                  <span class="paper-icon">⚪</span>
+                  <div class="paper-text">
+                    <span class="paper-title">Smooth Bristol</span>
+                    <span class="paper-desc">Pure flat plate finish for razor lineart</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Canvas Background & Initial Tool -->
+            <div class="builder-columns-row">
+              <div class="builder-col">
+                <span class="builder-section-title">3. Canvas Base Tint</span>
+                <div class="blank-bg-row">
+                  <button class="blank-bg-btn active" data-bg="#f7f4ed" style="background: #f7f4ed;" title="Rag Paper Ivory"></button>
+                  <button class="blank-bg-btn" data-bg="#f5efe6" style="background: #f5efe6;" title="Warm Cream"></button>
+                  <button class="blank-bg-btn" data-bg="#181a20" style="background: #181a20;" title="Dark Slate"></button>
+                  <button class="blank-bg-btn checkerboard" data-bg="transparent" title="Transparent Alpha"></button>
+                </div>
+              </div>
+              <div class="builder-col">
+                <span class="builder-section-title">4. Initial Atelier Tool</span>
+                <div class="blank-brush-row">
+                  <button class="blank-brush-btn active" data-brush="technical_pen">✒️ Tech Pen</button>
+                  <button class="blank-brush-btn" data-brush="charcoal">✏️ Charcoal</button>
+                  <button class="blank-brush-btn" data-brush="oil_brush">🖌️ Oil Paint</button>
+                  <button class="blank-brush-btn" data-brush="watercolor">💧 Watercolor</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Launch Summary & CTA Bar -->
+            <div class="blank-launch-bar">
+              <div class="blank-summary-info">
+                <span class="summary-label">Configured Canvas:</span>
+                <span class="summary-val" id="blank-summary-dimensions">1000 × 1333 px</span>
+                <span class="summary-sep">·</span>
+                <span class="summary-val" id="blank-summary-paper">Cold-Press Watercolor</span>
+                <span class="summary-sep">·</span>
+                <span class="summary-val" id="blank-summary-bg">Rag Paper (Ivory)</span>
+              </div>
+              <button class="blank-create-btn" id="btn-launch-blank-canvas">
+                <span>Create Blank Canvas & Launch Studio ➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: CUSTOM UPLOAD -->
+        <div class="chooser-panel" id="panel-choose-upload">
+          <div class="chooser-dropzone-box" id="chooser-upload-dropzone">
+            <span class="dropzone-large-icon">📁</span>
+            <h3 class="dropzone-prompt">Drag & Drop Your Image Here</h3>
+            <p class="dropzone-sub">Supports PNG, JPG, WebP photos, character sketches, or manga</p>
+            <button class="dropzone-browse-cta" id="btn-chooser-browse">Browse Files from Computer</button>
+            <input type="file" id="chooser-file-input" accept="image/*" style="display: none;">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <!-- SCRIPTS -->
   <script type="module" src="src/main.js"></script>

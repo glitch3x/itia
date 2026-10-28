@@ -7,12 +7,14 @@
 import { studioAudio } from "./audio.js";
 import { ART_TEMPLATES } from "./templates.js";
 import { CanvasEngine } from "./canvasEngine.js";
+import { WelcomeIntroController } from "./welcomeIntro.js";
 
 class StudioApp {
   constructor() {
     this.audio = studioAudio;
     this.engine = null;
     this.activeTemplate = null;
+    this.welcomeIntro = null;
 
     // UI state
     this.activeRightTab = "trace"; // trace, color, layers
@@ -45,13 +47,15 @@ class StudioApp {
     this.bindModals();
     this.bindShortcutsAndWindow();
 
-    // Default template: Iridescent Hydrangea
-    this.loadTemplate(ART_TEMPLATES[0]);
+    // Default template: Iridescent Hydrangea or Hellenistic Muse
+    const defaultTemplate = ART_TEMPLATES.find(t => t.id === "iridescent_hydrangea") || ART_TEMPLATES[0];
+    this.loadTemplate(defaultTemplate);
     this.renderGalleryGrid();
     this.renderLayersList();
     this.renderPaletteSwatches();
 
-    this.showToast("Welcome to ITIA Studio! Select a tool or trace reference to start.", 4000);
+    // Initialize full-screen welcome & motion graphic flow
+    this.welcomeIntro = new WelcomeIntroController(this, this.audio);
   }
 
   loadTemplate(template, asColoringBook = false) {
@@ -72,6 +76,13 @@ class StudioApp {
     const quickArtSelect = document.getElementById("quick-art-select");
     if (quickArtSelect && template) {
       quickArtSelect.value = template.id;
+    }
+
+    if (!template.image) {
+      this.engine.traceEngine.clearReference();
+      this.updateTraceControlsUI();
+      this.engine.requestRender();
+      return;
     }
 
     this.engine.traceEngine.loadReference(template.image, (img) => {
@@ -162,6 +173,83 @@ class StudioApp {
         const o = parseInt(e.target.value, 10) / 100;
         opacityVal.textContent = `${Math.round(o * 100)}%`;
         this.engine.brushEngine.setOpacity(o);
+      });
+    }
+
+    // Quick Size Presets
+    document.querySelectorAll(".size-preset-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const s = parseInt(pill.dataset.size, 10);
+        this.engine.brushEngine.setSize(s);
+        const sizeSlider = document.getElementById("brush-size-slider");
+        const sizeVal = document.getElementById("brush-size-val");
+        if (sizeSlider) sizeSlider.value = s;
+        if (sizeVal) sizeVal.textContent = `${s}px`;
+        document.querySelectorAll(".size-preset-pill").forEach(p => p.classList.toggle("active", p === pill));
+        this.audio.playClick();
+      });
+    });
+
+    // Pencil Studio Grades & Modes
+    document.querySelectorAll(".pencil-grade-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const grade = btn.dataset.grade;
+        this.engine.brushEngine.setPencilGrade(grade);
+        document.querySelectorAll(".pencil-grade-btn").forEach(b => b.classList.toggle("active", b === btn));
+        this.audio.playClick();
+        const desc = {
+          "2H": "2H: Hard, silver-gray precision lines",
+          "HB": "HB: Balanced sketching graphite",
+          "2B": "2B: Soft, rich expressive graphite",
+          "4B": "4B: Dark, velvety shading depth",
+          "6B": "6B: Deep matte chiaroscuro darks"
+        };
+        this.showToast(desc[grade] || `Pencil Grade: ${grade}`, 2000);
+      });
+    });
+
+    document.querySelectorAll(".pencil-mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.pmode;
+        this.engine.brushEngine.setPencilMode(mode);
+        document.querySelectorAll(".pencil-mode-btn").forEach(b => b.classList.toggle("active", b === btn));
+        this.audio.playClick();
+        this.showToast(mode === "shade" ? "📐 Flat Lead Tilt: Smooth Broad Shading" : "✏️ Pointed Tip: Precision Contours", 2000);
+      });
+    });
+
+    // Colour Pouring / Bucket Studio Controls
+    const bucketTolSlider = document.getElementById("bucket-tol-slider");
+    const bucketTolVal = document.getElementById("bucket-tol-val");
+    if (bucketTolSlider && bucketTolVal) {
+      bucketTolSlider.addEventListener("input", (e) => {
+        const tol = parseInt(e.target.value, 10);
+        bucketTolVal.textContent = `${tol}%`;
+        this.engine.bucketTolerance = tol;
+      });
+    }
+
+    const bucketExpSlider = document.getElementById("bucket-exp-slider");
+    const bucketExpVal = document.getElementById("bucket-exp-val");
+    if (bucketExpSlider && bucketExpVal) {
+      bucketExpSlider.addEventListener("input", (e) => {
+        const exp = parseInt(e.target.value, 10);
+        bucketExpVal.textContent = `${exp}px`;
+        this.engine.bucketExpansion = exp;
+      });
+    }
+
+    const gapToggleBtn = document.getElementById("btn-toggle-gap-closure");
+    if (gapToggleBtn) {
+      gapToggleBtn.addEventListener("click", () => {
+        this.engine.bucketGapClosure = !this.engine.bucketGapClosure;
+        gapToggleBtn.classList.toggle("active", this.engine.bucketGapClosure);
+        const textSpan = gapToggleBtn.querySelector(".gap-text");
+        if (textSpan) {
+          textSpan.textContent = this.engine.bucketGapClosure ? "Gap Protect: ON" : "Gap Protect: OFF";
+        }
+        this.audio.playClick();
+        this.showToast(this.engine.bucketGapClosure ? "🛡️ Gap Protection Enabled (blocks leaks)" : "Gap Protection Disabled", 2000);
       });
     }
 
@@ -312,15 +400,27 @@ class StudioApp {
   }
 
   selectTool(tool) {
-    this.engine.activeTool = tool;
+    this.engine.setActiveTool(tool);
     document.querySelectorAll(".tool-btn").forEach(b => {
       b.classList.toggle("active", b.dataset.tool === tool);
     });
     this.audio.playClick();
 
     const brushSubmenu = document.getElementById("brush-engines-submenu");
+    const pencilWidget = document.getElementById("pencil-studio-widget");
+    const bucketWidget = document.getElementById("bucket-studio-widget");
+
     if (brushSubmenu) {
       brushSubmenu.style.display = (tool === "brush" || tool === "line") ? "flex" : "none";
+    }
+
+    if (bucketWidget) {
+      bucketWidget.style.display = (tool === "bucket") ? "flex" : "none";
+    }
+
+    if (pencilWidget) {
+      const isPencil = (tool === "brush" || tool === "line") && this.engine.brushEngine.brushType === "pencil";
+      pencilWidget.style.display = isPencil ? "flex" : "none";
     }
   }
 
@@ -330,6 +430,12 @@ class StudioApp {
       b.classList.toggle("active", b.dataset.brush === type);
     });
     this.audio.playClick();
+
+    const pencilWidget = document.getElementById("pencil-studio-widget");
+    if (pencilWidget) {
+      const isPencil = type === "pencil" && (this.engine.activeTool === "brush" || this.engine.activeTool === "line");
+      pencilWidget.style.display = isPencil ? "flex" : "none";
+    }
   }
 
   bindRightPanel() {
@@ -695,6 +801,24 @@ class StudioApp {
   }
 
   bindModals() {
+    const headerNewCanvasBtn = document.getElementById("btn-header-new-canvas");
+    if (headerNewCanvasBtn) {
+      headerNewCanvasBtn.addEventListener("click", () => {
+        if (this.welcomeIntro) {
+          this.welcomeIntro.openCanvasChooser();
+        }
+      });
+    }
+
+    const logoBranding = document.getElementById("logo-branding");
+    if (logoBranding) {
+      logoBranding.addEventListener("click", () => {
+        if (this.welcomeIntro) {
+          this.welcomeIntro.openCanvasChooser();
+        }
+      });
+    }
+
     const openGalleryBtn = document.getElementById("btn-open-gallery");
     const headerGalleryBtn = document.getElementById("btn-header-gallery");
     if (openGalleryBtn) {
@@ -759,12 +883,29 @@ class StudioApp {
       });
     });
 
+    // Quick Download Button (Topbar)
+    const quickDownloadBtn = document.getElementById("btn-quick-download");
+    const doQuickDownload = () => {
+      const cleanTitle = (this.activeTemplate?.title || "Masterpiece").replace(/\s+/g, "_");
+      const incRef = document.getElementById("export-include-ref")?.checked || false;
+      const dataUrl = this.engine.exportImage("png", 1.0, incRef);
+      const filename = `ITIA_${cleanTitle}_${Date.now()}.png`;
+      this.triggerDownload(dataUrl, filename);
+      this.showToast(`⚡ Quick Downloaded "${this.activeTemplate?.title || "Masterpiece"}"!`, 3000);
+    };
+
+    if (quickDownloadBtn) {
+      quickDownloadBtn.addEventListener("click", doQuickDownload);
+    }
+    this.doQuickDownload = doQuickDownload;
+
     // Side-by-Side Comparison Card Download
     const downloadCardBtn = document.getElementById("btn-download-side-by-side");
     if (downloadCardBtn) {
       downloadCardBtn.addEventListener("click", () => {
+        const cleanTitle = (this.activeTemplate?.title || "Masterpiece").replace(/\s+/g, "_");
         const cardUrl = this.engine.exportSideBySideCard();
-        this.triggerDownload(cardUrl, `itia_comparison_card_${Date.now()}.png`);
+        this.triggerDownload(cardUrl, `ITIA_${cleanTitle}_Comparison_Card_${Date.now()}.png`);
         this.showToast("✨ Downloaded Side-by-Side Comparison Card!", 3000);
       });
     }
@@ -775,19 +916,60 @@ class StudioApp {
 
     if (downloadPngBtn) {
       downloadPngBtn.addEventListener("click", () => {
+        const cleanTitle = (this.activeTemplate?.title || "Masterpiece").replace(/\s+/g, "_");
         const incRef = document.getElementById("export-include-ref")?.checked || false;
         const dataUrl = this.engine.exportImage("png", 1.0, incRef);
-        this.triggerDownload(dataUrl, `itia_art_${Date.now()}.png`);
-        this.showToast("Artwork downloaded as PNG!", 2500);
+        this.triggerDownload(dataUrl, `ITIA_${cleanTitle}_${Date.now()}.png`);
+        this.showToast("Artwork downloaded as lossless PNG!", 2500);
       });
     }
 
     if (downloadJpgBtn) {
       downloadJpgBtn.addEventListener("click", () => {
+        const cleanTitle = (this.activeTemplate?.title || "Masterpiece").replace(/\s+/g, "_");
         const incRef = document.getElementById("export-include-ref")?.checked || false;
         const dataUrl = this.engine.exportImage("jpeg", 0.95, incRef);
-        this.triggerDownload(dataUrl, `itia_art_${Date.now()}.jpg`);
+        this.triggerDownload(dataUrl, `ITIA_${cleanTitle}_${Date.now()}.jpg`);
         this.showToast("Artwork downloaded as JPG!", 2500);
+      });
+    }
+
+    // ITIA Project Document (.itia) Export & Import
+    const downloadProjectBtn = document.getElementById("btn-download-project");
+    if (downloadProjectBtn) {
+      downloadProjectBtn.addEventListener("click", () => {
+        const cleanTitle = (this.activeTemplate?.title || "Masterpiece").replace(/\s+/g, "_");
+        const jsonStr = this.engine.exportProjectJSON({
+          title: this.activeTemplate?.title || "Masterpiece",
+          genre: this.activeTemplate?.genre || "Digital Art"
+        });
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        this.triggerDownload(url, `ITIA_${cleanTitle}_${Date.now()}.itia`);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        this.showToast("📦 Saved ITIA Multi-Layer Project Document (.itia)!", 3000);
+      });
+    }
+
+    const projectFileInput = document.getElementById("project-file-input");
+    if (projectFileInput) {
+      projectFileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            await this.engine.importProjectJSON(parsed);
+            this.closeModal("export-modal");
+            this.showToast(`✨ Restored ITIA Project Document "${parsed.meta?.title || file.name}"!`, 3500);
+          } catch (err) {
+            console.error("Project file import error:", err);
+            this.showToast("Failed to restore project file. Ensure it is a valid .itia document.", 3000);
+          }
+        };
+        reader.readAsText(file);
       });
     }
 
@@ -853,12 +1035,52 @@ class StudioApp {
     if (zoomInBtn) zoomInBtn.addEventListener("click", () => this.engine.setZoom(this.engine.zoom * 1.2));
     if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => this.engine.setZoom(this.engine.zoom * 0.83));
 
-    // Tab key toggles Zen Mode
+    // Global Keybindings
     window.addEventListener("keydown", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+      // Ctrl+S / Cmd+S: Quick Download
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (this.doQuickDownload) this.doQuickDownload();
+        return;
+      }
+
+      // Tab key toggles Zen Mode
       if (e.code === "Tab") {
         e.preventDefault();
         if (this.toggleZen) this.toggleZen();
+        return;
+      }
+
+      const k = e.key.toLowerCase();
+      if (k === "b") {
+        this.selectTool("brush");
+      } else if (k === "p") {
+        this.selectTool("brush");
+        this.selectBrushType("pencil");
+      } else if (k === "e") {
+        this.selectTool("eraser");
+      } else if (k === "g") {
+        this.selectTool("bucket");
+      } else if (k === "i") {
+        this.selectTool("eyedropper");
+      } else if (k === "l") {
+        this.selectTool("line");
+      } else if (k === "[") {
+        const s = Math.max(1, this.engine.brushEngine.size - 2);
+        this.engine.brushEngine.setSize(s);
+        const slider = document.getElementById("brush-size-slider");
+        const val = document.getElementById("brush-size-val");
+        if (slider) slider.value = s;
+        if (val) val.textContent = `${s}px`;
+      } else if (k === "]") {
+        const s = Math.min(180, this.engine.brushEngine.size + 2);
+        this.engine.brushEngine.setSize(s);
+        const slider = document.getElementById("brush-size-slider");
+        const val = document.getElementById("brush-size-val");
+        if (slider) slider.value = s;
+        if (val) val.textContent = `${s}px`;
       }
     });
   }

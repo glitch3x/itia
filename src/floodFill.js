@@ -1,7 +1,7 @@
 /**
  * ITIA STUDIO // SMART FLOOD FILL ENGINE
- * High-performance TypedArray BFS flood fill with tolerance, 
- * anti-gap boundary expansion, and Multi-Layer sampling support.
+ * Pro-grade TypedArray BFS flood fill with adjustable tolerance,
+ * anti-gap boundary expansion, leak gap closure, and Multi-Layer sampling.
  */
 
 export class FloodFill {
@@ -13,9 +13,10 @@ export class FloodFill {
    * @param {number} startY - Canvas pixel Y coordinate
    * @param {string} fillColorHex - Hex color to fill
    * @param {number} tolerance - Tolerance range (0 - 100)
-   * @param {number} expansion - Pixel expansion under lineart (0 - 3)
+   * @param {number} expansion - Pixel expansion under lineart (0 - 4)
+   * @param {boolean} gapClosure - Whether to prevent leaking through 1-2px breaks in strokes
    */
-  static fill(targetCtx, sampleCtx, startX, startY, fillColorHex, tolerance = 28, expansion = 1) {
+  static fill(targetCtx, sampleCtx, startX, startY, fillColorHex, tolerance = 35, expansion = 1, gapClosure = true) {
     const width = targetCtx.canvas.width;
     const height = targetCtx.canvas.height;
 
@@ -51,7 +52,38 @@ export class FloodFill {
       return false;
     }
 
-    const tolSq = (tolerance * 2.55) ** 2;
+    const tolSq = Math.max(16, (tolerance * 2.55) ** 2);
+
+    // Helper: is pixel a solid lineart boundary
+    const isLineartBoundary = (pix) => {
+      const a = (pix >> 24) & 0xff;
+      if (a < 60) return false;
+      const r = pix & 0xff;
+      const g = (pix >> 8) & 0xff;
+      const b = (pix >> 16) & 0xff;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      return lum < 85 && a > 140;
+    };
+
+    // Helper: gap closure leak detector
+    const isLeakGap = (x, y) => {
+      if (!gapClosure) return false;
+      // Horizontal bottleneck check (walls left and right within 1-2px)
+      const hasLeftWall = (x > 1 && isLineartBoundary(readData32[y * width + (x - 1)])) ||
+                          (x > 2 && isLineartBoundary(readData32[y * width + (x - 2)]));
+      const hasRightWall = (x < width - 2 && isLineartBoundary(readData32[y * width + (x + 1)])) ||
+                           (x < width - 3 && isLineartBoundary(readData32[y * width + (x + 2)]));
+      if (hasLeftWall && hasRightWall) return true;
+
+      // Vertical bottleneck check (walls top and bottom within 1-2px)
+      const hasTopWall = (y > 1 && isLineartBoundary(readData32[(y - 1) * width + x])) ||
+                         (y > 2 && isLineartBoundary(readData32[(y - 2) * width + x]));
+      const hasBottomWall = (y < height - 2 && isLineartBoundary(readData32[(y + 1) * width + x])) ||
+                            (y < height - 3 && isLineartBoundary(readData32[(y + 2) * width + x]));
+      if (hasTopWall && hasBottomWall) return true;
+
+      return false;
+    };
 
     // Bit array for visited pixels (width * height bits)
     const visited = new Uint8Array(Math.ceil((width * height) / 8));
@@ -82,8 +114,10 @@ export class FloodFill {
       if (y > 0) {
         const nIdx = idx - width;
         if (!isVisited(nIdx) && this.checkTolerance(readData32[nIdx], tr, tg, tb, ta, tolSq)) {
-          setVisited(nIdx);
-          queue[tail++] = nIdx;
+          if (!isLeakGap(x, y - 1)) {
+            setVisited(nIdx);
+            queue[tail++] = nIdx;
+          }
         }
       }
 
@@ -91,8 +125,10 @@ export class FloodFill {
       if (y < height - 1) {
         const sIdx = idx + width;
         if (!isVisited(sIdx) && this.checkTolerance(readData32[sIdx], tr, tg, tb, ta, tolSq)) {
-          setVisited(sIdx);
-          queue[tail++] = sIdx;
+          if (!isLeakGap(x, y + 1)) {
+            setVisited(sIdx);
+            queue[tail++] = sIdx;
+          }
         }
       }
 
@@ -100,8 +136,10 @@ export class FloodFill {
       if (x > 0) {
         const wIdx = idx - 1;
         if (!isVisited(wIdx) && this.checkTolerance(readData32[wIdx], tr, tg, tb, ta, tolSq)) {
-          setVisited(wIdx);
-          queue[tail++] = wIdx;
+          if (!isLeakGap(x - 1, y)) {
+            setVisited(wIdx);
+            queue[tail++] = wIdx;
+          }
         }
       }
 
@@ -109,19 +147,29 @@ export class FloodFill {
       if (x < width - 1) {
         const eIdx = idx + 1;
         if (!isVisited(eIdx) && this.checkTolerance(readData32[eIdx], tr, tg, tb, ta, tolSq)) {
-          setVisited(eIdx);
-          queue[tail++] = eIdx;
+          if (!isLeakGap(x + 1, y)) {
+            setVisited(eIdx);
+            queue[tail++] = eIdx;
+          }
         }
       }
     }
 
-    // Edge expansion: expand boundary by 1-2 pixels under lineart
+    // Edge expansion: expand boundary by 1-4 pixels under lineart to eradicate white fringe
     if (expansion > 0 && filledIndices && filledIndices.length > 0) {
       const fillLen = filledIndices.length;
       for (let i = 0; i < fillLen; i++) {
         const idx = filledIndices[i];
         const x = idx % width;
         const y = Math.floor(idx / width);
+
+        // Check if edge pixel (neighbor not filled)
+        const isEdge = (x === 0 || !isVisited(idx - 1)) ||
+                       (x === width - 1 || !isVisited(idx + 1)) ||
+                       (y === 0 || !isVisited(idx - width)) ||
+                       (y === height - 1 || !isVisited(idx + width));
+
+        if (!isEdge) continue;
 
         for (let dy = -expansion; dy <= expansion; dy++) {
           const ny = y + dy;
@@ -130,7 +178,12 @@ export class FloodFill {
             const nx = x + dx;
             if (nx < 0 || nx >= width) continue;
             const expIdx = ny * width + nx;
-            writeData32[expIdx] = fillPixel;
+
+            // If writing to a layer that contains solid black lineart, don't overwrite solid lineart
+            const readPix = readData32[expIdx];
+            if (!isLineartBoundary(readPix)) {
+              writeData32[expIdx] = fillPixel;
+            }
           }
         }
       }
@@ -149,12 +202,18 @@ export class FloodFill {
     // Both transparent?
     if (ta < 15 && a < 15) return true;
 
+    // Transparent target vs opaque sample:
+    if (ta < 15 && a > 30) {
+      // If we clicked empty background, stop at non-transparent lines
+      return false;
+    }
+
     const dr = r - tr;
     const dg = g - tg;
     const db = b - tb;
     const da = a - ta;
 
-    return (dr * dr + dg * dg + db * db + da * da * 0.5) <= tolSq;
+    return (dr * dr + dg * dg + db * db + da * da * 0.6) <= tolSq;
   }
 
   static colorMatch(p1, p2, tol = 5) {

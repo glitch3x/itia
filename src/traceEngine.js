@@ -92,6 +92,14 @@ export class TraceEngine {
     this.rawCtx.drawImage(this.referenceImg, dx, dy, dw, dh);
   }
 
+  clearReference() {
+    this.referenceImg = null;
+    this.referenceLoaded = false;
+    this.processedCtx.clearRect(0, 0, this.width, this.height);
+    this.rawCtx.clearRect(0, 0, this.width, this.height);
+    if (this.onUpdate) this.onUpdate();
+  }
+
   setOpacity(val) {
     this.opacity = Math.max(0, Math.min(1, val));
     if (this.onUpdate) this.onUpdate();
